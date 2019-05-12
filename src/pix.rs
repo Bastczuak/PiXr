@@ -1,3 +1,4 @@
+use crate::data::FONT8X8;
 use sdl2::event::Event;
 use sdl2::hint::set;
 use sdl2::pixels::Color;
@@ -32,10 +33,10 @@ impl PixWindow {
   pub fn new(sdl_ctx: &Sdl, width: u32, height: u32, title: &str) -> Self {
     let video_ctx = sdl_ctx.video().unwrap();
     let window = video_ctx
-        .window(title, width, height)
-        .position_centered()
-        .build()
-        .unwrap();
+      .window(title, width, height)
+      .position_centered()
+      .build()
+      .unwrap();
     let canvas = window.into_canvas().build().unwrap();
     PixWindow { canvas }
   }
@@ -82,6 +83,19 @@ impl PixWindow {
     }
   }
   pub fn print(&mut self, color: Color, x: i32, y: i32, text: &str) {
+    let mut x0 = x;
+    let y0 = y;
+    for char in text.chars() {
+      for y in 0..8 {
+        let mask = FONT8X8[char as usize][y as usize];
+        for x in 0..8 {
+          if (mask & (1 << x)) != 0 {
+            self.draw_pixel(x0 + x, y0 + y, color);
+          }
+        }
+      }
+      x0 += 8;
+    }
   }
   pub fn draw(&mut self) {
     self.canvas.present()
