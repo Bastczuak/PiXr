@@ -32,12 +32,20 @@ pub trait PixLifecycle: 'static {
 impl PixWindow {
   pub fn new(sdl_ctx: &Sdl, width: u32, height: u32, title: &str) -> Self {
     let video_ctx = sdl_ctx.video().unwrap();
+    let display_mode = video_ctx.desktop_display_mode(0).unwrap();
+    let factor = std::cmp::min(
+      display_mode.w / width as i32,
+      display_mode.h / height as i32,
+    );
+    let new_width = width * factor as u32;
+    let new_height = height * factor as u32;
     let window = video_ctx
-      .window(title, width, height)
+      .window(title, new_width, new_height)
       .position_centered()
       .build()
       .unwrap();
-    let canvas = window.into_canvas().build().unwrap();
+    let mut canvas = window.into_canvas().build().unwrap();
+    canvas.set_logical_size(width, height);
     PixWindow { canvas }
   }
 
