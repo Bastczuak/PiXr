@@ -12,7 +12,7 @@ impl PixLifecycle for Game {
   fn on_init(&self) -> PixSettings {
     screen(256, 240, "PiX - Example")
   }
-  fn on_update(&self, window: &mut PixWindow) {
+  fn on_update(&mut self, window: &mut PixWindow, dt: u32) {
     window.clear(Color::RGB(0, 0, 0));
     window.print(Color::RGB(255, 255, 255), 10, 10, "Hello World");
     window.draw();
