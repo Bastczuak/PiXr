@@ -152,6 +152,10 @@ impl PixWindow {
       x0 += 8;
     }
   }
+
+  pub fn dimensions(&self) -> (u32, u32) {
+    self.canvas.logical_size()
+  }
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
