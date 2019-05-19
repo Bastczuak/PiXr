@@ -2,11 +2,10 @@ mod data;
 mod pix;
 
 use crate::pix::{run, screen, PixLifecycle, PixSettings, PixWindow};
-use sdl2::pixels::Color;
 use std::f32::consts::PI;
 
 struct Game {
-  t: f32
+  t: f32,
 }
 
 impl PixLifecycle for Game {
@@ -21,10 +20,10 @@ impl PixLifecycle for Game {
     while self.t >= PI * 2.0 {
       self.t -= PI * 2.0;
     }
-    let x = w / 2.0 - (11.0 * 8.0 / 2.0);
-    let y = h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0;
-    window.clear(Color::RGB(0, 0, 0));
-    window.print(Color::RGB(255, 255, 255), x as i32, y as i32, "Hello World")?;
+    let x = (w / 2.0 - (11.0 * 8.0 / 2.0)) as i32;
+    let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0) as i32;
+    window.clear(0);
+    window.print(14, x, y, "Hello World")?;
     Ok(())
   }
 }

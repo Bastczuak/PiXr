@@ -1,6 +1,5 @@
-use crate::data::FONT8X8;
+use crate::data::{FONT8X8, PALETTE};
 use sdl2::event::Event;
-use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -39,30 +38,36 @@ impl PixWindow {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-        .window(title, new_width, new_height)
-        .position_centered()
-        .build()
-        .map_err(|e| e.to_string())?;
-    let mut canvas = window
-        .into_canvas()
-        .build()
-        .map_err(|e| e.to_string())?;
-    canvas.set_logical_size(width, height).map_err(|e| e.to_string())?;
+      .window(title, new_width, new_height)
+      .position_centered()
+      .build()
+      .map_err(|e| e.to_string())?;
+    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+    canvas
+      .set_logical_size(width, height)
+      .map_err(|e| e.to_string())?;
     Ok(PixWindow { canvas })
   }
 
-  pub fn clear(&mut self, color: Color) {
-    self.canvas.set_draw_color(color);
+  pub fn clear(&mut self, color: usize) {
+    self.canvas.set_draw_color(PALETTE[color]);
     self.canvas.clear();
   }
 
-  pub fn draw_pixel(&mut self, x: i32, y: i32, color: Color) -> Result<(), String> {
-    self.canvas.set_draw_color(color);
+  pub fn draw_pixel(&mut self, x: i32, y: i32, color: usize) -> Result<(), String> {
+    self.canvas.set_draw_color(PALETTE[color]);
     self.canvas.draw_point(Point::new(x, y))?;
     Ok(())
   }
 
-  pub fn draw_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, color: Color) -> Result<(), String> {
+  pub fn draw_line(
+    &mut self,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    color: usize,
+  ) -> Result<(), String> {
     let mut x0 = x0;
     let mut y0 = y0;
     let dx = i32::abs(x1 - x0);
@@ -93,7 +98,7 @@ impl PixWindow {
     mut y0: i32,
     mut x1: i32,
     mut y1: i32,
-    color: Color,
+    color: usize,
     fill: bool,
   ) -> Result<(), String> {
     if x0 > x1 {
@@ -126,7 +131,7 @@ impl PixWindow {
     x: i32,
     y: i32,
     radius: i32,
-    color: Color,
+    color: usize,
     fill: bool,
   ) -> Result<(), String> {
     let r0sq = if fill { 0 } else { (radius - 1) * (radius - 1) };
@@ -148,7 +153,7 @@ impl PixWindow {
     Ok(())
   }
 
-  pub fn print(&mut self, color: Color, x: i32, y: i32, text: &str) -> Result<(), String> {
+  pub fn print(&mut self, color: usize, x: i32, y: i32, text: &str) -> Result<(), String> {
     let mut x0 = x;
     let y0 = y;
     for char in text.chars() {
