@@ -1,4 +1,4 @@
-use crate::data::{FONT8X8, PALETTE};
+use crate::data::{FONT8X8, PALETTE, ASCII_HEX_DECODER};
 use sdl2::event::Event;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
@@ -38,14 +38,14 @@ impl PixWindow {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-      .window(title, new_width, new_height)
-      .position_centered()
-      .build()
-      .map_err(|e| e.to_string())?;
+        .window(title, new_width, new_height)
+        .position_centered()
+        .build()
+        .map_err(|e| e.to_string())?;
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas
-      .set_logical_size(width, height)
-      .map_err(|e| e.to_string())?;
+        .set_logical_size(width, height)
+        .map_err(|e| e.to_string())?;
     Ok(PixWindow { canvas })
   }
 
@@ -60,7 +60,7 @@ impl PixWindow {
     Ok(())
   }
 
-  pub fn draw_line(
+  pub fn line(
     &mut self,
     x0: i32,
     y0: i32,
@@ -92,7 +92,7 @@ impl PixWindow {
     Ok(())
   }
 
-  pub fn draw_rect(
+  pub fn rect(
     &mut self,
     mut x0: i32,
     mut y0: i32,
@@ -126,7 +126,7 @@ impl PixWindow {
     Ok(())
   }
 
-  pub fn draw_circle(
+  pub fn circle(
     &mut self,
     x: i32,
     y: i32,
@@ -166,6 +166,27 @@ impl PixWindow {
         }
       }
       x0 += 8;
+    }
+    Ok(())
+  }
+
+  pub fn draw(
+    &mut self,
+    pixels: &str,
+    width: u32,
+    height: u32,
+    x: i32,
+    y: i32,
+    transparent_color: Option<u8>,
+  ) -> Result<(), String> {
+    for x0 in 0..height {
+      for y0 in 0..width {
+        let index = (y0 + x0 * width) as usize;
+        let color = ASCII_HEX_DECODER[pixels.as_bytes()[index] as usize];
+        if color != transparent_color.unwrap_or(0) {
+          self.draw_pixel(y0 as i32 + y, x0 as i32 + x, color as usize)?;
+        }
+      }
     }
     Ok(())
   }
