@@ -1,7 +1,7 @@
 mod data;
 mod pix;
 
-use crate::pix::{run, screen, PixLifecycle, PixSettings, PixWindow};
+use crate::pix::{run, screen, PixLifecycle, PixSettings, Pix};
 use std::f32::consts::PI;
 
 struct Game {
@@ -12,8 +12,8 @@ impl PixLifecycle for Game {
   fn on_init(&self) -> PixSettings {
     screen(256, 240, "PiX - Example")
   }
-  fn on_update(&mut self, window: &mut PixWindow, dt: f32) -> Result<(), String> {
-    let (w, h) = window.screen();
+  fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
+    let (w, h) = pix.screen();
     let w = w as f32;
     let h = h as f32;
     self.t += dt * 1.25;
@@ -22,8 +22,8 @@ impl PixLifecycle for Game {
     }
     let x = (w / 2.0 - (11.0 * 8.0 / 2.0)) as i32;
     let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0) as i32;
-    window.clear(0);
-    window.print(14, x, y, "Hello World")?;
+    pix.clear(0);
+    pix.print(14, x, y, "Hello World")?;
     Ok(())
   }
 }

@@ -1,8 +1,9 @@
-use crate::data::{FONT8X8, PALETTE, ASCII_HEX_DECODER};
+use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use sdl2::event::Event;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
+use sdl2::EventSubsystem;
 use sdl2::Sdl;
 use std::time::Duration;
 
@@ -12,8 +13,9 @@ pub struct PixSettings<'a> {
   title: &'a str,
 }
 
-pub struct PixWindow {
+pub struct Pix {
   canvas: Canvas<Window>,
+  event: EventSubsystem,
 }
 
 pub trait PixLifecycle: 'static {
@@ -24,10 +26,10 @@ pub trait PixLifecycle: 'static {
       title: "Default",
     }
   }
-  fn on_update(&mut self, window: &mut PixWindow, dt: f32) -> Result<(), String>;
+  fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String>;
 }
 
-impl PixWindow {
+impl Pix {
   pub fn new(sdl_ctx: &Sdl, width: u32, height: u32, title: &str) -> Result<Self, String> {
     let video_ctx = sdl_ctx.video()?;
     let display_mode = video_ctx.desktop_display_mode(0)?;
@@ -38,15 +40,16 @@ impl PixWindow {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-        .window(title, new_width, new_height)
-        .position_centered()
-        .build()
-        .map_err(|e| e.to_string())?;
+      .window(title, new_width, new_height)
+      .position_centered()
+      .build()
+      .map_err(|e| e.to_string())?;
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas
-        .set_logical_size(width, height)
-        .map_err(|e| e.to_string())?;
-    Ok(PixWindow { canvas })
+      .set_logical_size(width, height)
+      .map_err(|e| e.to_string())?;
+    let event = sdl_ctx.event()?;
+    Ok(Pix { canvas, event })
   }
 
   pub fn clear(&mut self, color: usize) {
@@ -56,18 +59,10 @@ impl PixWindow {
 
   pub fn pixel(&mut self, color: usize, x: i32, y: i32) -> Result<(), String> {
     self.canvas.set_draw_color(PALETTE[color % 16]);
-    self.canvas.draw_point(Point::new(x, y))?;
-    Ok(())
+    self.canvas.draw_point(Point::new(x, y))
   }
 
-  pub fn line(
-    &mut self,
-    color: usize,
-    x0: i32,
-    y0: i32,
-    x1: i32,
-    y1: i32,
-  ) -> Result<(), String> {
+  pub fn line(&mut self, color: usize, x0: i32, y0: i32, x1: i32, y1: i32) -> Result<(), String> {
     let mut x0 = x0;
     let mut y0 = y0;
     let dx = i32::abs(x1 - x0);
@@ -194,13 +189,17 @@ impl PixWindow {
   pub fn screen(&self) -> (u32, u32) {
     self.canvas.logical_size()
   }
+
+  pub fn quit(&self) -> Result<(), String> {
+    self.event.push_event(Event::Quit { timestamp: 0 })
+  }
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
   let settings = lifecycle.on_init();
-  let sdl_ctx = sdl2::init().unwrap();
-  let mut sdl_timer = sdl_ctx.timer().unwrap();
-  let mut window = PixWindow::new(&sdl_ctx, settings.width, settings.height, settings.title)?;
+  let sdl_ctx = sdl2::init()?;
+  let mut sdl_timer = sdl_ctx.timer()?;
+  let mut window = Pix::new(&sdl_ctx, settings.width, settings.height, settings.title)?;
   let mut event_pump = sdl_ctx.event_pump()?;
   let mut last_tick = 0;
   'running: loop {
