@@ -1,7 +1,7 @@
 mod data;
 mod pix;
 
-use crate::pix::{run, screen, PixLifecycle, PixSettings, Pix};
+use crate::pix::{run, screen, Pix, PixLifecycle, PixSettings};
 use std::f32::consts::PI;
 
 struct Game {
