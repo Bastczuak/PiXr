@@ -191,7 +191,7 @@ impl PixWindow {
     Ok(())
   }
 
-  pub fn dimensions(&self) -> (u32, u32) {
+  pub fn screen(&self) -> (u32, u32) {
     self.canvas.logical_size()
   }
 }

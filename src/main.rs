@@ -13,7 +13,7 @@ impl PixLifecycle for Game {
     screen(256, 240, "PiX - Example")
   }
   fn on_update(&mut self, window: &mut PixWindow, dt: f32) -> Result<(), String> {
-    let (w, h) = window.dimensions();
+    let (w, h) = window.screen();
     let w = w as f32;
     let h = h as f32;
     self.t += dt * 1.25;
