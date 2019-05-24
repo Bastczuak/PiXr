@@ -201,6 +201,13 @@ impl Pix {
       Err(e) => String::from("Failed to get base path!")
     }
   }
+
+  pub fn pref_path(&self, org: &str, app: &str) -> String {
+    match pref_path(org, app) {
+      Ok(path) => path,
+      Err(e) => String::from("Failed to get pref path!")
+    }
+  }
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
