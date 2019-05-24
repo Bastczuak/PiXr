@@ -1,5 +1,6 @@
 use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use sdl2::event::Event;
+use sdl2::filesystem::{base_path, pref_path};
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -195,8 +196,8 @@ impl Pix {
   }
 
   pub fn base_path(&self) -> String {
-    match std::env::current_exe() {
-      Ok(exe_path) => exe_path.display().to_string(),
+    match base_path() {
+      Ok(path) => path,
       Err(e) => String::from("Failed to get base path!")
     }
   }
