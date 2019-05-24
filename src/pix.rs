@@ -40,14 +40,14 @@ impl Pix {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-      .window(title, new_width, new_height)
-      .position_centered()
-      .build()
-      .map_err(|e| e.to_string())?;
+        .window(title, new_width, new_height)
+        .position_centered()
+        .build()
+        .map_err(|e| e.to_string())?;
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas
-      .set_logical_size(width, height)
-      .map_err(|e| e.to_string())?;
+        .set_logical_size(width, height)
+        .map_err(|e| e.to_string())?;
     let event = sdl_ctx.event()?;
     Ok(Pix { canvas, event })
   }
@@ -192,6 +192,13 @@ impl Pix {
 
   pub fn quit(&self) -> Result<(), String> {
     self.event.push_event(Event::Quit { timestamp: 0 })
+  }
+
+  pub fn base_path(&self) -> String {
+    match std::env::current_exe() {
+      Ok(exe_path) => exe_path.display().to_string(),
+      Err(e) => String::from("Failed to get base path!")
+    }
   }
 }
 
