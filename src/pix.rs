@@ -7,6 +7,7 @@ use sdl2::video::Window;
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
 use std::time::Duration;
+use sdl2::clipboard::ClipboardUtil;
 
 pub struct PixSettings<'a> {
   width: u32,
@@ -17,6 +18,7 @@ pub struct PixSettings<'a> {
 pub struct Pix {
   canvas: Canvas<Window>,
   event: EventSubsystem,
+  clipboard: ClipboardUtil,
 }
 
 pub trait PixLifecycle: 'static {
@@ -50,7 +52,8 @@ impl Pix {
         .set_logical_size(width, height)
         .map_err(|e| e.to_string())?;
     let event = sdl_ctx.event()?;
-    Ok(Pix { canvas, event })
+    let clipboard = video_ctx.clipboard();
+    Ok(Pix { canvas, event, clipboard })
   }
 
   pub fn clear(&mut self, color: usize) {
@@ -198,14 +201,24 @@ impl Pix {
   pub fn base_path(&self) -> String {
     match base_path() {
       Ok(path) => path,
-      Err(e) => String::from("Failed to get base path!")
+      Err(_) => String::from("Failed to get base path!")
     }
   }
 
   pub fn pref_path(&self, org: &str, app: &str) -> String {
     match pref_path(org, app) {
       Ok(path) => path,
-      Err(e) => String::from("Failed to get pref path!")
+      Err(_) => String::from("Failed to get pref path!")
+    }
+  }
+
+  pub fn clipboard(&self, text: Option<&str>) -> Result<String, String> {
+    match text {
+      Some(text) => match self.clipboard.set_clipboard_text(text) {
+        Ok(_) => Ok(String::new()),
+        Err(e) => Err(e)
+      },
+      None => self.clipboard.clipboard_text()
     }
   }
 }
