@@ -50,23 +50,23 @@ impl PixWindow {
   }
 
   pub fn clear(&mut self, color: usize) {
-    self.canvas.set_draw_color(PALETTE[color]);
+    self.canvas.set_draw_color(PALETTE[color % 16]);
     self.canvas.clear();
   }
 
-  pub fn draw_pixel(&mut self, x: i32, y: i32, color: usize) -> Result<(), String> {
-    self.canvas.set_draw_color(PALETTE[color]);
+  pub fn pixel(&mut self, color: usize, x: i32, y: i32) -> Result<(), String> {
+    self.canvas.set_draw_color(PALETTE[color % 16]);
     self.canvas.draw_point(Point::new(x, y))?;
     Ok(())
   }
 
   pub fn line(
     &mut self,
+    color: usize,
     x0: i32,
     y0: i32,
     x1: i32,
     y1: i32,
-    color: usize,
   ) -> Result<(), String> {
     let mut x0 = x0;
     let mut y0 = y0;
@@ -76,7 +76,7 @@ impl PixWindow {
     let sy = if y0 < y1 { 1 } else { -1 };
     let mut err = if dx > dy { dx / 2 } else { -dy / 2 };
     'running: loop {
-      self.draw_pixel(x0, y0, color)?;
+      self.pixel(color, x0, y0)?;
       if x0 == x1 && y0 == y1 {
         break 'running;
       }
@@ -94,11 +94,11 @@ impl PixWindow {
 
   pub fn rect(
     &mut self,
+    color: usize,
     mut x0: i32,
     mut y0: i32,
     mut x1: i32,
     mut y1: i32,
-    color: usize,
     fill: bool,
   ) -> Result<(), String> {
     if x0 > x1 {
@@ -108,19 +108,19 @@ impl PixWindow {
       std::mem::swap(&mut y0, &mut y1);
     }
     if fill {
-      for y in y0..y1 + 1 {
-        for x in x0..x1 + 1 {
-          self.draw_pixel(x, y, color)?;
+      for y in y0..=y1 {
+        for x in x0..=x1 {
+          self.pixel(color, x, y)?;
         }
       }
     } else {
-      for y in y0..y1 + 1 {
-        self.draw_pixel(x0, y, color)?;
-        self.draw_pixel(x1, y, color)?;
+      for y in y0..=y1 {
+        self.pixel(color, x0, y)?;
+        self.pixel(color, x1, y)?;
       }
-      for x in x0..x1 + 1 {
-        self.draw_pixel(x, y0, color)?;
-        self.draw_pixel(x, y1, color)?;
+      for x in x0..=x1 {
+        self.pixel(color, x, y0)?;
+        self.pixel(color, x, y1)?;
       }
     }
     Ok(())
@@ -128,10 +128,10 @@ impl PixWindow {
 
   pub fn circle(
     &mut self,
+    color: usize,
     x: i32,
     y: i32,
     radius: i32,
-    color: usize,
     fill: bool,
   ) -> Result<(), String> {
     let r0sq = if fill { 0 } else { (radius - 1) * (radius - 1) };
@@ -140,13 +140,13 @@ impl PixWindow {
     let y0 = y;
     let r = if radius < 0 { -radius } else { radius };
 
-    for y in -r..r + 1 {
+    for y in -r..=r {
       let dy = y * y;
-      for x in -r..r + 1 {
+      for x in -r..=r {
         let dx = x * x;
         let distance = dx + dy;
         if distance >= r0sq && distance <= r1sq {
-          self.draw_pixel(x0 + x, y0 + y, color)?;
+          self.pixel(color, x0 + x, y0 + y)?;
         }
       }
     }
@@ -161,7 +161,7 @@ impl PixWindow {
         let mask = FONT8X8[char as usize][y as usize];
         for x in 0..8 {
           if (mask & (1 << x)) != 0 {
-            self.draw_pixel(x0 + x, y0 + y, color)?;
+            self.pixel(color, x0 + x, y0 + y)?;
           }
         }
       }
@@ -184,7 +184,7 @@ impl PixWindow {
         let index = (y0 + x0 * width) as usize;
         let color = ASCII_HEX_DECODER[pixels.as_bytes()[index] as usize];
         if color != transparent_color.unwrap_or(0) {
-          self.draw_pixel(y0 as i32 + y, x0 as i32 + x, color as usize)?;
+          self.pixel(color as usize, y0 as i32 + y, x0 as i32 + x)?;
         }
       }
     }
@@ -205,11 +205,8 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
   let mut last_tick = 0;
   'running: loop {
     for event in event_pump.poll_iter() {
-      match event {
-        Event::Quit { .. } => {
-          break 'running;
-        }
-        _ => {}
+      if let Event::Quit { .. } = event {
+        break 'running;
       }
     }
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
