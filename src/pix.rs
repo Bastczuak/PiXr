@@ -1,4 +1,5 @@
 use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
+use sdl2::clipboard::ClipboardUtil;
 use sdl2::event::Event;
 use sdl2::filesystem::{base_path, pref_path};
 use sdl2::rect::Point;
@@ -7,7 +8,6 @@ use sdl2::video::Window;
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
 use std::time::Duration;
-use sdl2::clipboard::ClipboardUtil;
 
 pub struct PixSettings<'a> {
   width: u32,
@@ -19,6 +19,8 @@ pub struct Pix {
   canvas: Canvas<Window>,
   event: EventSubsystem,
   clipboard: ClipboardUtil,
+  colors: [(u8, u8, u8, u8); 16],
+  clear_color: usize,
 }
 
 pub trait PixLifecycle: 'static {
@@ -43,26 +45,37 @@ impl Pix {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-        .window(title, new_width, new_height)
-        .position_centered()
-        .build()
-        .map_err(|e| e.to_string())?;
+      .window(title, new_width, new_height)
+      .position_centered()
+      .build()
+      .map_err(|e| e.to_string())?;
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
     canvas
-        .set_logical_size(width, height)
-        .map_err(|e| e.to_string())?;
+      .set_logical_size(width, height)
+      .map_err(|e| e.to_string())?;
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
-    Ok(Pix { canvas, event, clipboard })
+    Ok(Pix {
+      canvas,
+      event,
+      clipboard,
+      colors: *PALETTE,
+      clear_color: 0,
+    })
   }
 
-  pub fn clear(&mut self, color: usize) {
-    self.canvas.set_draw_color(PALETTE[color % 16]);
+  pub fn clear(&mut self, color: Option<usize>) {
+    match color {
+      Some(color) => self.canvas.set_draw_color(self.colors[color % 16]),
+      None => self
+        .canvas
+        .set_draw_color(self.colors[self.clear_color % 16]),
+    };
     self.canvas.clear();
   }
 
   pub fn pixel(&mut self, color: usize, x: i32, y: i32) -> Result<(), String> {
-    self.canvas.set_draw_color(PALETTE[color % 16]);
+    self.canvas.set_draw_color(self.colors[color % 16]);
     self.canvas.draw_point(Point::new(x, y))
   }
 
@@ -194,6 +207,26 @@ impl Pix {
     self.canvas.logical_size()
   }
 
+  pub fn color(&mut self, index: usize, rgb: Option<(u8, u8, u8, u8)>) -> Option<(u8, u8, u8, u8)> {
+    match rgb {
+      Some(rgb) => {
+        self.colors[index % 16] = rgb;
+        None
+      }
+      None => Some(self.colors[index % 16]),
+    }
+  }
+
+  pub fn clear_color(&mut self, color: Option<usize>) -> Option<usize> {
+    match color {
+      Some(color) => {
+        self.clear_color = color;
+        None
+      }
+      None => Some(self.clear_color),
+    }
+  }
+
   pub fn quit(&self) -> Result<(), String> {
     self.event.push_event(Event::Quit { timestamp: 0 })
   }
@@ -201,14 +234,14 @@ impl Pix {
   pub fn base_path(&self) -> String {
     match base_path() {
       Ok(path) => path,
-      Err(_) => String::from("Failed to get base path!")
+      Err(_) => String::from("Failed to get base path!"),
     }
   }
 
   pub fn pref_path(&self, org: &str, app: &str) -> String {
     match pref_path(org, app) {
       Ok(path) => path,
-      Err(_) => String::from("Failed to get pref path!")
+      Err(_) => String::from("Failed to get pref path!"),
     }
   }
 
@@ -216,9 +249,9 @@ impl Pix {
     match text {
       Some(text) => match self.clipboard.set_clipboard_text(text) {
         Ok(_) => Ok(String::new()),
-        Err(e) => Err(e)
+        Err(e) => Err(e),
       },
-      None => self.clipboard.clipboard_text()
+      None => self.clipboard.clipboard_text(),
     }
   }
 }
