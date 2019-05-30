@@ -2,7 +2,7 @@ use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use sdl2::clipboard::ClipboardUtil;
 use sdl2::event::Event;
 use sdl2::filesystem::{base_path, pref_path};
-use sdl2::rect::Point;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::EventSubsystem;
@@ -224,6 +224,26 @@ impl Pix {
         None
       }
       None => Some(self.clear_color),
+    }
+  }
+
+  pub fn clip_rect(&mut self, rect: Option<(i32, i32, i32, i32)>) -> Option<(i32, i32, i32, i32)> {
+    match rect {
+      Some(rect) => {
+        let (x0, y0, x1, y1) = rect;
+        let width = i32::abs(x1 - x0) as u32;
+        let height = i32::abs(y1 - y0) as u32;
+        self.canvas.set_clip_rect(Rect::new(x0, y0, width, height));
+        None
+      }
+      None => {
+        let rect = self.canvas.clip_rect()?;
+        let x0 = rect.x();
+        let y0 = rect.y();
+        let x1 = x0 + rect.width() as i32;
+        let y1 = y0 + rect.height() as i32;
+        Some((x0, y0, x1, y1))
+      }
     }
   }
 
