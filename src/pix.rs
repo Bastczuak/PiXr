@@ -2,6 +2,7 @@ use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use sdl2::clipboard::ClipboardUtil;
 use sdl2::event::Event;
 use sdl2::filesystem::{base_path, pref_path};
+use sdl2::mouse::MouseUtil;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -19,6 +20,7 @@ pub struct Pix {
   canvas: Canvas<Window>,
   event: EventSubsystem,
   clipboard: ClipboardUtil,
+  mouse: MouseUtil,
   colors: [(u8, u8, u8, u8); 16],
   clear_color: usize,
 }
@@ -55,10 +57,12 @@ impl Pix {
       .map_err(|e| e.to_string())?;
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
+    let mouse = sdl_ctx.mouse();
     Ok(Pix {
       canvas,
       event,
       clipboard,
+      mouse,
       colors: *PALETTE,
       clear_color: 0,
     })
@@ -272,6 +276,16 @@ impl Pix {
         Err(e) => Err(e),
       },
       None => self.clipboard.clipboard_text(),
+    }
+  }
+
+  pub fn mouse_cursor(&self, visible: Option<bool>) -> Option<bool> {
+    match visible {
+      Some(visible) => {
+        self.mouse.show_cursor(visible);
+        None
+      }
+      None => Some(self.mouse.is_cursor_showing()),
     }
   }
 }
