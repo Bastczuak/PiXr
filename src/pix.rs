@@ -5,34 +5,23 @@ use sdl2::filesystem::{base_path, pref_path};
 use sdl2::mouse::MouseUtil;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
-use sdl2::video::Window;
+use sdl2::video::{DisplayMode, Window};
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
 use std::time::Duration;
-
-pub struct PixSettings<'a> {
-  width: u32,
-  height: u32,
-  title: &'a str,
-}
 
 pub struct Pix {
   canvas: Canvas<Window>,
   event: EventSubsystem,
   clipboard: ClipboardUtil,
   mouse: MouseUtil,
+  display_mode: DisplayMode,
   colors: [(u8, u8, u8, u8); 16],
   clear_color: usize,
 }
 
 pub trait PixLifecycle: 'static {
-  fn on_init(&self) -> PixSettings {
-    PixSettings {
-      width: 256,
-      height: 240,
-      title: "Default",
-    }
-  }
+  fn on_init(&self, pix: &mut Pix) -> Result<(), String>;
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String>;
 }
 
@@ -63,6 +52,7 @@ impl Pix {
       event,
       clipboard,
       mouse,
+      display_mode,
       colors: *PALETTE,
       clear_color: 0,
     })
@@ -207,7 +197,19 @@ impl Pix {
     Ok(())
   }
 
-  pub fn screen(&self) -> (u32, u32) {
+  pub fn screen(&mut self, width: u32, height: u32, title: &str) -> Result<(), String> {
+    self
+      .canvas
+      .window_mut()
+      .set_title(title)
+      .map_err(|e| e.to_string())?;
+    self
+      .canvas
+      .set_logical_size(width, height)
+      .map_err(|e| e.to_string())
+  }
+
+  pub fn dimension(&self) -> (u32, u32) {
     self.canvas.logical_size()
   }
 
@@ -291,12 +293,12 @@ impl Pix {
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
-  let settings = lifecycle.on_init();
   let sdl_ctx = sdl2::init()?;
   let mut sdl_timer = sdl_ctx.timer()?;
-  let mut window = Pix::new(&sdl_ctx, settings.width, settings.height, settings.title)?;
+  let mut pix = Pix::new(&sdl_ctx, 256, 240, "Default")?;
   let mut event_pump = sdl_ctx.event_pump()?;
   let mut last_tick = 0;
+  lifecycle.on_init(&mut pix);
   'running: loop {
     for event in event_pump.poll_iter() {
       if let Event::Quit { .. } = event {
@@ -308,16 +310,8 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     let current_tick = sdl_timer.ticks();
     let delta_tick = current_tick - last_tick;
     last_tick = current_tick;
-    lifecycle.on_update(&mut window, delta_tick as f32 / 1000.0)?;
-    window.canvas.present();
+    lifecycle.on_update(&mut pix, delta_tick as f32 / 1000.0)?;
+    pix.canvas.present();
   }
   Ok(())
-}
-
-pub fn screen(width: u32, height: u32, title: &str) -> PixSettings {
-  PixSettings {
-    width,
-    height,
-    title,
-  }
 }
