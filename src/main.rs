@@ -22,7 +22,7 @@ impl PixLifecycle for Game {
     }
     let x = (w / 2.0 - (11.0 * 8.0 / 2.0)) as i32;
     let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0) as i32;
-    pix.clear(0);
+    pix.clear(Some(0));
     pix.print(14, x, y, "Hello World")?;
     Ok(())
   }
