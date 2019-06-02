@@ -5,7 +5,7 @@ use sdl2::filesystem::{base_path, pref_path};
 use sdl2::mouse::MouseUtil;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
-use sdl2::video::{DisplayMode, Window};
+use sdl2::video::{DisplayMode, FullscreenType, Window};
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
 use std::time::Duration;
@@ -207,6 +207,29 @@ impl Pix {
       .canvas
       .set_logical_size(width, height)
       .map_err(|e| e.to_string())
+  }
+
+  pub fn fullscreen(&mut self, enable: Option<bool>) -> Result<bool, String> {
+    let state = self.canvas.window_mut().fullscreen_state();
+    let state = match state {
+      FullscreenType::Off => false,
+      _ => true,
+    };
+    match enable {
+      Some(enable) => {
+        let enable = if enable == true {
+          FullscreenType::Desktop
+        } else {
+          FullscreenType::Off
+        };
+        let result = self.canvas.window_mut().set_fullscreen(enable);
+        match result {
+          Ok(result) => Ok(state),
+          Err(e) => Err(e),
+        }
+      }
+      None => Ok(state),
+    }
   }
 
   pub fn dimension(&self) -> (u32, u32) {
