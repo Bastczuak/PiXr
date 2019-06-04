@@ -26,6 +26,18 @@ impl PixLifecycle for Game {
     pix.print(14, x, y, "Hello World")?;
     Ok(())
   }
+  fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+    println!("{}", key);
+    Ok(())
+  }
+  fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+    println!("{}", key);
+    Ok(())
+  }
+  fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
+    println!("Goodbye");
+    Ok(())
+  }
 }
 
 fn main() -> Result<(), String> {

@@ -21,8 +21,21 @@ pub struct Pix {
 }
 
 pub trait PixLifecycle: 'static {
-  fn on_init(&self, pix: &mut Pix) -> Result<(), String>;
-  fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String>;
+  fn on_init(&self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+    Ok(())
+  }
 }
 
 impl Pix {
@@ -321,11 +334,20 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
   let mut pix = Pix::new(&sdl_ctx, 256, 240, "Default")?;
   let mut event_pump = sdl_ctx.event_pump()?;
   let mut last_tick = 0;
-  lifecycle.on_init(&mut pix);
+  lifecycle.on_init(&mut pix)?;
   'running: loop {
     for event in event_pump.poll_iter() {
-      if let Event::Quit { .. } = event {
-        break 'running;
+      match event {
+        Event::Quit { .. } => break 'running,
+        Event::KeyDown { keycode, .. } => match keycode {
+          Some(keycode) => lifecycle.on_keydown(&mut pix, keycode.to_string())?,
+          None => {}
+        },
+        Event::KeyUp { keycode, .. } => match keycode {
+          Some(keycode) => lifecycle.on_keyup(&mut pix, keycode.to_string())?,
+          None => {}
+        },
+        _ => {}
       }
     }
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -336,5 +358,5 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     lifecycle.on_update(&mut pix, delta_tick as f32 / 1000.0)?;
     pix.canvas.present();
   }
-  Ok(())
+  lifecycle.on_exit(&mut pix)
 }
