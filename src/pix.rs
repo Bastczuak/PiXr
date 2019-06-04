@@ -27,13 +27,16 @@ pub trait PixLifecycle: 'static {
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     Ok(())
   }
-  fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
-    Ok(())
-  }
   fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
     Ok(())
   }
   fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_mousemotion(&self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
 }
@@ -347,6 +350,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
           Some(keycode) => lifecycle.on_keyup(&mut pix, keycode.to_string())?,
           None => {}
         },
+        Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
         _ => {}
       }
     }

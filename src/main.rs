@@ -34,6 +34,10 @@ impl PixLifecycle for Game {
     println!("{}", key);
     Ok(())
   }
+  fn on_mousemotion(&self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+    println!("{}, {}", x, y);
+    Ok(())
+  }
   fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
     println!("Goodbye");
     Ok(())
