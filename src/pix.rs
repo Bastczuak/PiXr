@@ -347,7 +347,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
           None => {}
         },
         Event::KeyUp { keycode, .. } => match keycode {
-          Some(keycode) => lifecycle.on_keyup(&mut pix, keycode.to_string())?,
+          Some(keycode) => lifecycle.on_keyup(&mut pix, keycode.name())?,
           None => {}
         },
         Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
