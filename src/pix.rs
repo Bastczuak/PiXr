@@ -5,9 +5,11 @@ use sdl2::filesystem::{base_path, pref_path};
 use sdl2::mouse::MouseUtil;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
-use sdl2::video::{DisplayMode, FullscreenType, Window};
+use sdl2::video::{FullscreenType, Window};
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
+use std::io::ErrorKind;
+use std::net::UdpSocket;
 use std::time::Duration;
 
 pub struct Pix {
@@ -15,9 +17,9 @@ pub struct Pix {
   event: EventSubsystem,
   clipboard: ClipboardUtil,
   mouse: MouseUtil,
-  display_mode: DisplayMode,
   colors: [(u8, u8, u8, u8); 16],
   clear_color: usize,
+  udp: Option<UdpSocket>,
 }
 
 pub trait PixLifecycle: 'static {
@@ -37,6 +39,9 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  fn on_receive(&self, pix: &mut Pix, ip: String, port: u16, data: &[u8]) -> Result<(), String> {
     Ok(())
   }
 }
@@ -68,9 +73,9 @@ impl Pix {
       event,
       clipboard,
       mouse,
-      display_mode,
       colors: *PALETTE,
       clear_color: 0,
+      udp: None,
     })
   }
 
@@ -329,6 +334,29 @@ impl Pix {
       None => Some(self.mouse.is_cursor_showing()),
     }
   }
+
+  pub fn opensocket(&mut self, port: u16) -> Result<(), String> {
+    let socket = UdpSocket::bind(format!("127.0.0.1:{}", port)).map_err(|e| e.to_string())?;
+    socket.set_nonblocking(true).map_err(|e| e.to_string())?;
+    self.udp = Some(socket);
+    Ok(())
+  }
+
+  pub fn closesocket(&mut self) {
+    self.udp = None;
+  }
+
+  pub fn send(&mut self, ip: &str, port: u16, data: String) -> Result<(), String> {
+    match self.udp {
+      Some(ref udp) => {
+        udp
+          .send_to(data.as_bytes(), format!("{}:{}", ip, port))
+          .map_err(|e| e.to_string())?;
+        Ok(())
+      }
+      None => Ok(()),
+    }
+  }
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
@@ -353,6 +381,22 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
         _ => {}
       }
+    }
+    match pix.udp {
+      Some(ref udp) => {
+        let mut buf = [0u8; 1024];
+        match udp.recv_from(&mut buf) {
+          Ok((number_of_byte, src_addr)) => {
+            let data = &buf[..number_of_byte];
+            lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), data)?;
+          }
+          Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
+            println!("Something went wrong: {}", err)
+          }
+          _ => {}
+        }
+      }
+      None => {}
     }
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     // The rest of the game loop goes here...

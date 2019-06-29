@@ -10,6 +10,7 @@ struct Game {
 
 impl PixLifecycle for Game {
   fn on_init(&self, pix: &mut Pix) -> Result<(), String> {
+    pix.opensocket(5555)?;
     pix.screen(100, 100, "Test")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
@@ -28,6 +29,7 @@ impl PixLifecycle for Game {
   }
   fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{}", key);
+    pix.send("127.0.0.1", 5554, key)?;
     Ok(())
   }
   fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
@@ -40,6 +42,10 @@ impl PixLifecycle for Game {
   }
   fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
     println!("Goodbye");
+    Ok(())
+  }
+  fn on_receive(&self, pix: &mut Pix, ip: String, port: u16, data: &[u8]) -> Result<(), String> {
+    println!("{}", std::str::from_utf8(data).unwrap());
     Ok(())
   }
 }
