@@ -336,7 +336,7 @@ impl Pix {
   }
 
   pub fn opensocket(&mut self, port: u16) -> Result<(), String> {
-    let socket = UdpSocket::bind(format!("127.0.0.1:{}", port)).map_err(|e| e.to_string())?;
+    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).map_err(|e| e.to_string())?;
     socket.set_nonblocking(true).map_err(|e| e.to_string())?;
     self.udp = Some(socket);
     Ok(())

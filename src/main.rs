@@ -29,7 +29,7 @@ impl PixLifecycle for Game {
   }
   fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{}", key);
-    pix.send("127.0.0.1", 5554, key)?;
+    pix.send("0.0.0.0", 5554, key)?;
     Ok(())
   }
   fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
