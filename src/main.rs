@@ -11,6 +11,8 @@ struct Game {
 impl PixLifecycle for Game {
   fn on_init(&self, pix: &mut Pix) -> Result<(), String> {
     pix.opensocket(5555)?;
+    let ip = pix.resolve_host("google.de")?;
+    println!("{:?}", ip);
     pix.screen(100, 100, "Test")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {

@@ -8,8 +8,9 @@ use sdl2::render::Canvas;
 use sdl2::video::{FullscreenType, Window};
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
+use std::io;
 use std::io::ErrorKind;
-use std::net::UdpSocket;
+use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 
 pub struct Pix {
@@ -344,6 +345,15 @@ impl Pix {
 
   pub fn closesocket(&mut self) {
     self.udp = None;
+  }
+
+  pub fn resolve_host(&mut self, host: &str) -> Result<Vec<String>, String> {
+    let results: io::Result<Vec<IpAddr>> = (host, 0)
+      .to_socket_addrs()
+      .map(|iter| iter.map(|address| address.ip()).collect());
+    let ips = results.map_err(|e| e.to_string())?;
+    let ret: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
+    Ok(ret)
   }
 
   pub fn send(&mut self, ip: &str, port: u16, data: String) -> Result<(), String> {
