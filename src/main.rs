@@ -13,6 +13,7 @@ impl PixLifecycle for Game {
     pix.opensocket(5555)?;
     let ip = pix.resolve_host("google.de")?;
     println!("{:?}", ip);
+    println!("{}", pix.random(None, None));
     pix.screen(100, 100, "Test")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {

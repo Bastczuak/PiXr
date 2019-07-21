@@ -21,6 +21,7 @@ pub struct Pix {
   colors: [(u8, u8, u8, u8); 16],
   clear_color: usize,
   udp: Option<UdpSocket>,
+  random_seed: u32,
 }
 
 pub trait PixLifecycle: 'static {
@@ -77,6 +78,7 @@ impl Pix {
       colors: *PALETTE,
       clear_color: 0,
       udp: None,
+      random_seed: 314159265,
     })
   }
 
@@ -366,6 +368,27 @@ impl Pix {
       }
       None => Ok(()),
     }
+  }
+
+  pub fn randomseed(&mut self, seed: Option<u32>) -> Option<u32> {
+    match seed {
+      Some(seed) => {
+        self.random_seed = seed;
+        None
+      }
+      None => Some(self.random_seed),
+    }
+  }
+
+  pub fn random(&mut self, n: Option<u32>, m: Option<u32>) -> f64 {
+    self.random_seed ^= self.random_seed << 13;
+    self.random_seed ^= self.random_seed >> 17;
+    self.random_seed ^= self.random_seed << 5;
+    let mut r = self.random_seed as f64 / 4294967296.0;
+    let up = m.unwrap_or(1);
+    let low = n.unwrap_or(0);
+    r *= (up - low) as f64;
+    r + low as f64
   }
 }
 
