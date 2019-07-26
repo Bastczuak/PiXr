@@ -112,7 +112,7 @@ impl Pix {
       colors: *PALETTE,
       clear_color: 0,
       udp: None,
-      random_seed: 314159265,
+      random_seed: 314_159_265,
     })
   }
 
@@ -275,7 +275,7 @@ impl Pix {
     };
     match enable {
       Some(enable) => {
-        let enable = if enable == true {
+        let enable = if enable {
           FullscreenType::Desktop
         } else {
           FullscreenType::Off
@@ -378,7 +378,9 @@ impl Pix {
     socket
       .set_nonblocking(true)
       .map_err(|e| format!("opensocket() {}", e.to_string()))?;
-    socket.set_broadcast(broadcast);
+    socket
+      .set_broadcast(broadcast)
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     self.udp = Some(socket);
     Ok(())
   }
@@ -423,11 +425,11 @@ impl Pix {
     self.random_seed ^= self.random_seed << 13;
     self.random_seed ^= self.random_seed >> 17;
     self.random_seed ^= self.random_seed << 5;
-    let mut r = self.random_seed as f64 / 4294967296.0;
+    let mut r = f64::from(self.random_seed) / 4294967296.0;
     let up = m.unwrap_or(1);
     let low = n.unwrap_or(0);
-    r *= (up - low) as f64;
-    r + low as f64
+    r *= f64::from(up - low);
+    r + f64::from(low)
   }
 }
 
@@ -442,33 +444,32 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     for event in event_pump.poll_iter() {
       match event {
         Event::Quit { .. } => break 'running,
-        Event::KeyDown { keycode, .. } => match keycode {
-          Some(keycode) => lifecycle.on_keydown(&mut pix, keycode.to_string())?,
-          None => {}
-        },
-        Event::KeyUp { keycode, .. } => match keycode {
-          Some(keycode) => lifecycle.on_keyup(&mut pix, keycode.name())?,
-          None => {}
-        },
+        Event::KeyDown { keycode, .. } => {
+          if let Some(keycode) = keycode {
+            lifecycle.on_keydown(&mut pix, keycode.name())?
+          }
+        }
+        Event::KeyUp { keycode, .. } => {
+          if let Some(keycode) = keycode {
+            lifecycle.on_keyup(&mut pix, keycode.name())?
+          }
+        }
         Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
         _ => {}
       }
     }
-    match pix.udp {
-      Some(ref udp) => {
-        let mut buf = [0u8; 1024];
-        match udp.recv_from(&mut buf) {
-          Ok((number_of_byte, src_addr)) => {
-            let de = PixMsgPack::new(&buf[..number_of_byte]);
-            lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), de)?;
-          }
-          Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
-            println!("Something went wrong: {}", err)
-          }
-          _ => {}
+    if let Some(ref udp) = pix.udp {
+      let mut buf = [0u8; 1024];
+      match udp.recv_from(&mut buf) {
+        Ok((number_of_byte, src_addr)) => {
+          let de = PixMsgPack::new(&buf[..number_of_byte]);
+          lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), de)?;
         }
+        Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
+          println!("Something went wrong: {}", err)
+        }
+        _ => {}
       }
-      None => {}
     }
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     // The rest of the game loop goes here...
