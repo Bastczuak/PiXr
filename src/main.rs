@@ -1,7 +1,7 @@
 mod data;
 mod pix;
 
-use crate::pix::{run, Pix, PixLifecycle};
+use crate::pix::{run, Pix, PixLifecycle, PixMsgPack};
 use std::f32::consts::PI;
 
 struct Game {
@@ -10,7 +10,7 @@ struct Game {
 
 impl PixLifecycle for Game {
   fn on_init(&self, pix: &mut Pix) -> Result<(), String> {
-    pix.opensocket(5555)?;
+    pix.opensocket(4055, true)?;
     let ip = pix.resolve_host("google.de")?;
     println!("{:?}", ip);
     println!("{}", pix.random(None, None));
@@ -31,8 +31,8 @@ impl PixLifecycle for Game {
     Ok(())
   }
   fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
-    println!("{}", key);
-    pix.send("0.0.0.0", 5554, key)?;
+    println!("{} pressed", key);
+    pix.send("255.255.255.255", 4055, key)?;
     Ok(())
   }
   fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
@@ -47,8 +47,15 @@ impl PixLifecycle for Game {
     println!("Goodbye");
     Ok(())
   }
-  fn on_receive(&self, pix: &mut Pix, ip: String, port: u16, data: &[u8]) -> Result<(), String> {
-    println!("{}", std::str::from_utf8(data).unwrap());
+  fn on_receive(
+    &self,
+    pix: &mut Pix,
+    ip: String,
+    port: u16,
+    data: PixMsgPack,
+  ) -> Result<(), String> {
+    let message: String = data.deserialize()?;
+    println!("{}", message);
     Ok(())
   }
 }

@@ -1,4 +1,5 @@
 use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
+use rmp_serde::{Deserializer, Serializer};
 use sdl2::clipboard::ClipboardUtil;
 use sdl2::event::Event;
 use sdl2::filesystem::{base_path, pref_path};
@@ -8,10 +9,34 @@ use sdl2::render::Canvas;
 use sdl2::video::{FullscreenType, Window};
 use sdl2::EventSubsystem;
 use sdl2::Sdl;
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
+
+fn serialize<T: Serialize>(thing: T) -> Vec<u8> {
+  let mut buf = Vec::new();
+  thing.serialize(&mut Serializer::new(&mut buf)).unwrap();
+  buf
+}
+
+pub struct PixMsgPack<'a> {
+  data: &'a [u8],
+}
+
+impl<'a> PixMsgPack<'a> {
+  pub fn new(data: &'a [u8]) -> Self {
+    PixMsgPack { data }
+  }
+
+  pub fn deserialize<T: Deserialize<'a>>(self) -> Result<T, String> {
+    let mut de = Deserializer::new(self.data);
+    let result: T =
+      Deserialize::deserialize(&mut de).map_err(|e| format!("deserialize() {}", e.to_string()))?;
+    Ok(result)
+  }
+}
 
 pub struct Pix {
   canvas: Canvas<Window>,
@@ -43,7 +68,13 @@ pub trait PixLifecycle: 'static {
   fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
-  fn on_receive(&self, pix: &mut Pix, ip: String, port: u16, data: &[u8]) -> Result<(), String> {
+  fn on_receive(
+    &self,
+    pix: &mut Pix,
+    ip: String,
+    port: u16,
+    data: PixMsgPack,
+  ) -> Result<(), String> {
     Ok(())
   }
 }
@@ -358,12 +389,13 @@ impl Pix {
     Ok(ret)
   }
 
-  pub fn send(&mut self, ip: &str, port: u16, data: String) -> Result<(), String> {
+  pub fn send<T: Serialize>(&mut self, ip: &str, port: u16, data: T) -> Result<(), String> {
+    let se = serialize(data);
     match self.udp {
       Some(ref udp) => {
         udp
-          .send_to(data.as_bytes(), format!("{}:{}", ip, port))
-          .map_err(|e| e.to_string())?;
+          .send_to(&se[..], format!("{}:{}", ip, port))
+          .map_err(|e| format!("send() {}", e.to_string()))?;
         Ok(())
       }
       None => Ok(()),
@@ -420,8 +452,8 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         let mut buf = [0u8; 1024];
         match udp.recv_from(&mut buf) {
           Ok((number_of_byte, src_addr)) => {
-            let data = &buf[..number_of_byte];
-            lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), data)?;
+            let de = PixMsgPack::new(&buf[..number_of_byte]);
+            lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), de)?;
           }
           Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
             println!("Something went wrong: {}", err)
