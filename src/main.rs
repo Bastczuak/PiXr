@@ -9,7 +9,7 @@ struct Game {
 }
 
 impl PixLifecycle for Game {
-  fn on_init(&self, pix: &mut Pix) -> Result<(), String> {
+  fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     pix.opensocket(4055, true)?;
     let ip = pix.resolve_host("google.de")?;
     println!("{:?}", ip);
@@ -30,25 +30,25 @@ impl PixLifecycle for Game {
     pix.print(14, x, y, "Hello World")?;
     Ok(())
   }
-  fn on_keydown(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{} pressed", key);
     pix.send("255.255.255.255", 4055, key)?;
     Ok(())
   }
-  fn on_keyup(&self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{}", key);
     Ok(())
   }
-  fn on_mousemotion(&self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+  fn on_mousemotion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
     println!("{}, {}", x, y);
     Ok(())
   }
-  fn on_exit(&self, pix: &mut Pix) -> Result<(), String> {
+  fn on_exit(&mut self, pix: &mut Pix) -> Result<(), String> {
     println!("Goodbye");
     Ok(())
   }
   fn on_receive(
-    &self,
+    &mut self,
     pix: &mut Pix,
     ip: String,
     port: u16,
