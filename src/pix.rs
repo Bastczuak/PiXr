@@ -93,11 +93,14 @@ impl Pix {
       .window(title, new_width, new_height)
       .position_centered()
       .build()
-      .map_err(|e| e.to_string())?;
-    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+      .map_err(|e| format!("new() {}", e.to_string()))?;
+    let mut canvas = window
+      .into_canvas()
+      .build()
+      .map_err(|e| format!("new() {}", e.to_string()))?;
     canvas
       .set_logical_size(width, height)
-      .map_err(|e| e.to_string())?;
+      .map_err(|e| format!("new() {}", e.to_string()))?;
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
     let mouse = sdl_ctx.mouse();
@@ -257,11 +260,11 @@ impl Pix {
       .canvas
       .window_mut()
       .set_title(title)
-      .map_err(|e| e.to_string())?;
+      .map_err(|e| format!("screen() {}", e.to_string()))?;
     self
       .canvas
       .set_logical_size(width, height)
-      .map_err(|e| e.to_string())
+      .map_err(|e| format!("screen() {}", e.to_string()))
   }
 
   pub fn fullscreen(&mut self, enable: Option<bool>) -> Result<bool, String> {
@@ -369,9 +372,13 @@ impl Pix {
     }
   }
 
-  pub fn opensocket(&mut self, port: u16) -> Result<(), String> {
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).map_err(|e| e.to_string())?;
-    socket.set_nonblocking(true).map_err(|e| e.to_string())?;
+  pub fn opensocket(&mut self, port: u16, broadcast: bool) -> Result<(), String> {
+    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port))
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+    socket
+      .set_nonblocking(true)
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+    socket.set_broadcast(broadcast);
     self.udp = Some(socket);
     Ok(())
   }
@@ -384,7 +391,7 @@ impl Pix {
     let results: io::Result<Vec<IpAddr>> = (host, 0)
       .to_socket_addrs()
       .map(|iter| iter.map(|address| address.ip()).collect());
-    let ips = results.map_err(|e| e.to_string())?;
+    let ips = results.map_err(|e| format!("resolve_host() {}", e.to_string()))?;
     let ret: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
     Ok(ret)
   }
