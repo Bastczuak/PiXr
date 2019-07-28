@@ -86,6 +86,10 @@ pub trait PixLifecycle: 'static {
   ) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
+  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+    Ok(())
+  }
 }
 
 impl Pix {
@@ -463,6 +467,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
             lifecycle.on_keyup(&mut pix, keycode.name())?
           }
         }
+        Event::TextInput { text, .. } => lifecycle.on_textinput(&mut pix, text)?,
         Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
         _ => {}
       }
