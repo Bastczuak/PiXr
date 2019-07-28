@@ -1,3 +1,5 @@
+pub mod data;
+
 use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use rmp_serde::{Deserializer, Serializer};
 use sdl2::clipboard::ClipboardUtil;
@@ -50,24 +52,31 @@ pub struct Pix {
 }
 
 pub trait PixLifecycle: 'static {
+  #[allow(unused)]
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_mousemotion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_exit(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
   fn on_receive(
     &mut self,
     pix: &mut Pix,
@@ -282,7 +291,7 @@ impl Pix {
         };
         let result = self.canvas.window_mut().set_fullscreen(enable);
         match result {
-          Ok(result) => Ok(state),
+          Ok(_) => Ok(state),
           Err(e) => Err(e),
         }
       }
@@ -425,7 +434,7 @@ impl Pix {
     self.random_seed ^= self.random_seed << 13;
     self.random_seed ^= self.random_seed >> 17;
     self.random_seed ^= self.random_seed << 5;
-    let mut r = f64::from(self.random_seed) / 4294967296.0;
+    let mut r = f64::from(self.random_seed) / 4_294_967_296.0;
     let up = m.unwrap_or(1);
     let low = n.unwrap_or(0);
     r *= f64::from(up - low);

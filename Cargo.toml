@@ -4,8 +4,14 @@ version = "0.1.0"
 authors = ["Sebastian Richter <sebastian.richter@paessler.com>"]
 edition = "2018"
 
+[lib]
+name = "pix"
+crate-type = ["rlib", "staticlib"]
+
 [dependencies]
 sdl2 = "0.32"
 rmp-serde = "0.13"
 serde = { version = "1.0", features = ["derive"] }
 
+[[example]]
+name = "demo"

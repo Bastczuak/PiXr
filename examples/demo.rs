@@ -1,11 +1,11 @@
-mod data;
-mod pix;
+extern crate pix;
 
-use crate::pix::{run, Pix, PixLifecycle, PixMsgPack};
+use pix::{run, Pix, PixLifecycle, PixMsgPack};
 use std::f32::consts::PI;
 
 struct Game {
   t: f32,
+  chat: String,
 }
 
 impl PixLifecycle for Game {
@@ -14,7 +14,7 @@ impl PixLifecycle for Game {
     let ip = pix.resolve_host("google.de")?;
     println!("{:?}", ip);
     println!("{}", pix.random(None, None));
-    pix.screen(100, 100, "Test")
+    pix.screen(256, 256, "Test")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     let (w, h) = pix.dimension();
@@ -27,12 +27,19 @@ impl PixLifecycle for Game {
     let x = (w / 2.0 - (11.0 * 8.0 / 2.0)) as i32;
     let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0) as i32;
     pix.clear(Some(0));
-    pix.print(14, x, y, "Hello World")?;
+    pix.print(14, x, y, self.chat.as_str())?;
     Ok(())
   }
   fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{} pressed", key);
-    pix.send("255.255.255.255", 4055, key)?;
+    match key.as_str() {
+      "Return" => {
+        pix.send("255.255.255.255", 4055, self.chat.clone())?;
+        self.chat.clear();
+      }
+      "Space" => self.chat.push_str(" "),
+      _ => self.chat.push_str(key.as_str()),
+    }
     Ok(())
   }
   fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
@@ -61,5 +68,8 @@ impl PixLifecycle for Game {
 }
 
 fn main() -> Result<(), String> {
-  run(Game { t: 0.0 })
+  run(Game {
+    t: 0.0,
+    chat: String::from("Hello World"),
+  })
 }
