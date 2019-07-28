@@ -1,3 +1,4 @@
+
 extern crate pix;
 
 use pix::{run, Pix, PixLifecycle, PixMsgPack};
@@ -10,11 +11,7 @@ struct Game {
 
 impl PixLifecycle for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
-    pix.opensocket(4055, true)?;
-    let ip = pix.resolve_host("google.de")?;
-    println!("{:?}", ip);
-    println!("{}", pix.random(None, None));
-    pix.screen(256, 256, "Test")
+    pix.screen(256, 240, "Test")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     let (w, h) = pix.dimension();
@@ -65,6 +62,10 @@ impl PixLifecycle for Game {
     println!("{}", message);
     Ok(())
   }
+  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+    println!("textinput {}", text);
+    Ok(())
+  }
 }
 
 fn main() -> Result<(), String> {
@@ -73,3 +74,4 @@ fn main() -> Result<(), String> {
     chat: String::from("Hello World"),
   })
 }
+
