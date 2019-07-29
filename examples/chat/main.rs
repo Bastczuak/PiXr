@@ -17,7 +17,7 @@ impl PixLifecycle for Game {
     pix.clear(Some(0));
 
     for (y, message) in self.chat.iter().enumerate() {
-      pix.print(11, 0, (y * 8) as i32, message.as_str());
+      pix.print(11, 0, (y * 8) as i32, message.as_str())?;
     }
 
     let (w, h) = pix.dimension();
