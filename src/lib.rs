@@ -558,7 +558,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
       }
     }
     if let Some(ref udp) = pix.udp {
-      let mut buf = [0u8; 1024];
+      let mut buf = [0u8; 0xffffusize];
       match udp.recv_from(&mut buf) {
         Ok((number_of_byte, src_addr)) => {
           let de = PixMsgPack::new(&buf[..number_of_byte]);
