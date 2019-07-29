@@ -3,9 +3,9 @@ pub mod data;
 use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
 use rmp_serde::{Deserializer, Serializer};
 use sdl2::clipboard::ClipboardUtil;
-use sdl2::event::Event;
+use sdl2::event::{Event, WindowEvent};
 use sdl2::filesystem::{base_path, pref_path};
-use sdl2::mouse::MouseUtil;
+use sdl2::mouse::{MouseButton, MouseUtil};
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::video::{FullscreenType, Window};
@@ -16,6 +16,23 @@ use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
+
+trait SdlMouseButtonToString {
+  fn to_string(&self) -> String;
+}
+
+impl SdlMouseButtonToString for MouseButton {
+  fn to_string(&self) -> String {
+    match self {
+      MouseButton::Left => String::from("Left"),
+      MouseButton::Right => String::from("Right"),
+      MouseButton::Middle => String::from("Middle"),
+      MouseButton::X1 => String::from("X1"),
+      MouseButton::X2 => String::from("X2"),
+      MouseButton::Unknown => String::from("Unknown"),
+    }
+  }
+}
 
 fn serialize<T: Serialize>(thing: T) -> Vec<u8> {
   let mut buf = Vec::new();
@@ -73,7 +90,15 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_exit(&mut self, pix: &mut Pix) -> Result<(), String> {
+  fn on_mousedown(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -88,6 +113,40 @@ pub trait PixLifecycle: 'static {
   }
   #[allow(unused)]
   fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_controlleradded(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_controllerremoved(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_controllerdown(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_controllerup(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_controllermotion(
+    &mut self,
+    pix: &mut Pix,
+    id: i32,
+    axis: String,
+    value: i16,
+  ) -> Result<(), String> {
     Ok(())
   }
 }
@@ -469,7 +528,33 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         }
         Event::TextInput { text, .. } => lifecycle.on_textinput(&mut pix, text)?,
         Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
-        _ => {}
+        Event::MouseButtonDown { mouse_btn, .. } => {
+          lifecycle.on_mousedown(&mut pix, mouse_btn.to_string())?
+        }
+        Event::MouseButtonUp { mouse_btn, .. } => {
+          lifecycle.on_mouseup(&mut pix, mouse_btn.to_string())?
+        }
+        Event::ControllerDeviceAdded { which, .. } => {
+          lifecycle.on_controlleradded(&mut pix, which as i32)?
+        }
+        Event::ControllerDeviceRemoved { which, .. } => {
+          lifecycle.on_controllerremoved(&mut pix, which)?
+        }
+        Event::ControllerButtonDown { which, button, .. } => {
+          lifecycle.on_controllerdown(&mut pix, which, button.string())?
+        }
+        Event::ControllerButtonUp { which, button, .. } => {
+          lifecycle.on_controllerup(&mut pix, which, button.string())?
+        }
+        Event::ControllerAxisMotion { which, axis, value, .. } => {
+          lifecycle.on_controllermotion(&mut pix, which, axis.string(), value)?
+        }
+        Event::Window { win_event, .. } => match win_event {
+          WindowEvent::FocusGained => lifecycle.on_focusgained(&mut pix)?,
+          WindowEvent::FocusLost => lifecycle.on_focuslost(&mut pix)?,
+          _ => (),
+        },
+        _ => (),
       }
     }
     if let Some(ref udp) = pix.udp {
@@ -482,7 +567,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
           println!("Something went wrong: {}", err)
         }
-        _ => {}
+        _ => (),
       }
     }
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -493,5 +578,5 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     lifecycle.on_update(&mut pix, delta_tick as f32 / 1000.0)?;
     pix.canvas.present();
   }
-  lifecycle.on_exit(&mut pix)
+  lifecycle.on_quit(&mut pix)
 }

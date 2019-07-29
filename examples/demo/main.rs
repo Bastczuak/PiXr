@@ -1,7 +1,6 @@
-
 extern crate pix;
 
-use pix::{run, Pix, PixLifecycle, PixMsgPack};
+use pix::{run, Pix, PixLifecycle};
 use std::f32::consts::PI;
 
 struct Game {
@@ -28,15 +27,7 @@ impl PixLifecycle for Game {
     Ok(())
   }
   fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
-    println!("{} pressed", key);
-    match key.as_str() {
-      "Return" => {
-        pix.send("255.255.255.255", 4055, self.chat.clone())?;
-        self.chat.clear();
-      }
-      "Space" => self.chat.push_str(" "),
-      _ => self.chat.push_str(key.as_str()),
-    }
+    println!("{}", key);
     Ok(())
   }
   fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
@@ -47,23 +38,28 @@ impl PixLifecycle for Game {
     println!("{}, {}", x, y);
     Ok(())
   }
-  fn on_exit(&mut self, pix: &mut Pix) -> Result<(), String> {
-    println!("Goodbye");
+  fn on_mousedown(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+    println!("{}", button);
     Ok(())
   }
-  fn on_receive(
-    &mut self,
-    pix: &mut Pix,
-    ip: String,
-    port: u16,
-    data: PixMsgPack,
-  ) -> Result<(), String> {
-    let message: String = data.deserialize()?;
-    println!("{}", message);
+  fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+    println!("{}", button);
+    Ok(())
+  }
+  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
+    println!("Goodbye");
     Ok(())
   }
   fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
     println!("textinput {}", text);
+    Ok(())
+  }
+  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
+    println!("focus gained");
+    Ok(())
+  }
+  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
+    println!("focus lost");
     Ok(())
   }
 }
@@ -74,4 +70,3 @@ fn main() -> Result<(), String> {
     chat: String::from("Hello World"),
   })
 }
-
