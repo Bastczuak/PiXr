@@ -40,11 +40,6 @@ impl PixLifecycle for Game {
       _ => Ok(())
     }
   }
-  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
-    self.text.push_str(text.as_str());
-    Ok(())
-  }
-
   fn on_receive(
     &mut self,
     pix: &mut Pix,
@@ -54,6 +49,11 @@ impl PixLifecycle for Game {
   ) -> Result<(), String> {
     let string : String = data.deserialize()?;
     self.chat.push(string);
+    Ok(())
+  }
+
+  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+    self.text.push_str(text.as_str());
     Ok(())
   }
 }
