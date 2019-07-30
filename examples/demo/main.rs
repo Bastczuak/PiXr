@@ -12,6 +12,10 @@ impl PixLifecycle for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     pix.screen(256, 240, "Test")
   }
+  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
+    println!("Goodbye");
+    Ok(())
+  }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     let (w, h) = pix.dimension();
     let w = w as f32;
@@ -44,10 +48,6 @@ impl PixLifecycle for Game {
   }
   fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
     println!("{}", button);
-    Ok(())
-  }
-  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
-    println!("Goodbye");
     Ok(())
   }
   fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {

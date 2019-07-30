@@ -74,6 +74,10 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
+  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     Ok(())
   }
@@ -95,32 +99,6 @@ pub trait PixLifecycle: 'static {
   }
   #[allow(unused)]
   fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
-    Ok(())
-  }
-  #[allow(unused)]
-  fn on_quit(&mut self, pix: &mut Pix) -> Result<(), String> {
-    Ok(())
-  }
-  #[allow(unused)]
-  fn on_receive(
-    &mut self,
-    pix: &mut Pix,
-    ip: String,
-    port: u16,
-    data: PixMsgPack,
-  ) -> Result<(), String> {
-    Ok(())
-  }
-  #[allow(unused)]
-  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
-    Ok(())
-  }
-  #[allow(unused)]
-  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
-    Ok(())
-  }
-  #[allow(unused)]
-  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -146,6 +124,28 @@ pub trait PixLifecycle: 'static {
     id: i32,
     axis: String,
     value: i16,
+  ) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
+    Ok(())
+  }
+  #[allow(unused)]
+  fn on_receive(
+    &mut self,
+    pix: &mut Pix,
+    ip: String,
+    port: u16,
+    data: PixMsgPack,
   ) -> Result<(), String> {
     Ok(())
   }
