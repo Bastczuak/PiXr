@@ -1,4 +1,4 @@
-pub static FONT8X8: &'static [[u8; 8]; 256] = &[
+pub static FONT8X8: &[[u8; 8]; 256] = &[
   [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], /* 0 */
   [0x7e, 0x81, 0xa5, 0x81, 0xbd, 0x99, 0x81, 0x7e], /* 1 */
   [0x7e, 0xff, 0xdb, 0xff, 0xc3, 0xe7, 0xff, 0x7e], /* 2 */
@@ -257,7 +257,7 @@ pub static FONT8X8: &'static [[u8; 8]; 256] = &[
   [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], /* 255 */
 ];
 
-pub static PALETTE: &'static [(u8, u8, u8, u8); 16] = &[
+pub static PALETTE: &[(u8, u8, u8, u8); 16] = &[
   (0x14, 0x0c, 0x1c, 0xff),
   (0x44, 0x24, 0x34, 0xff),
   (0x30, 0x34, 0x6d, 0xff),
@@ -277,7 +277,7 @@ pub static PALETTE: &'static [(u8, u8, u8, u8); 16] = &[
 ];
 
 #[rustfmt::skip]
-pub static ASCII_HEX_DECODER: &'static [u8; 256] = &[
+pub static ASCII_HEX_DECODER: &[u8; 256] = &[
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
