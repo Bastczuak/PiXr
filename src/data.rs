@@ -278,22 +278,22 @@ pub static PALETTE: &[(u8, u8, u8, u8); 16] = &[
 
 #[rustfmt::skip]
 pub static ASCII_HEX_DECODER: &[u8; 256] = &[
-  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  0,  0,  0,  0,  0,  0,
-	0, 10, 11, 12, 13, 14, 15,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0, 10, 11, 12, 13, 14, 15,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+  0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ];
 
 #[rustfmt::skip]
@@ -310,4 +310,49 @@ pub static ADCPM_STEP_TABLE: &[u16; 89] = &[
   12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767,
 ];
 
-pub const PIX_AUDIO_VOICES: usize = 16;
+#[derive(Debug, Copy, Clone)]
+pub enum PixAudioChannel {
+  Channel0,
+  Channel1,
+  Channel2,
+  Channel3,
+  Channel4,
+  Channel5,
+  Channel6,
+  Channel7,
+  Channel8,
+  Channel9,
+  Channel10,
+  Channel11,
+  Channel12,
+  Channel13,
+  Channel14,
+  Channel15,
+  NumberOf,
+}
+
+impl PixAudioChannel {
+  pub fn from(value: usize) -> PixAudioChannel {
+    match value {
+      0 => PixAudioChannel::Channel0,
+      1 => PixAudioChannel::Channel1,
+      2 => PixAudioChannel::Channel2,
+      3 => PixAudioChannel::Channel3,
+      4 => PixAudioChannel::Channel4,
+      5 => PixAudioChannel::Channel5,
+      6 => PixAudioChannel::Channel6,
+      7 => PixAudioChannel::Channel7,
+      8 => PixAudioChannel::Channel8,
+      9 => PixAudioChannel::Channel9,
+      10 => PixAudioChannel::Channel10,
+      11 => PixAudioChannel::Channel11,
+      12 => PixAudioChannel::Channel12,
+      13 => PixAudioChannel::Channel13,
+      14 => PixAudioChannel::Channel14,
+      15 => PixAudioChannel::Channel14,
+      _ => panic!("Unknown value: {}", value),
+    }
+  }
+}
+
+pub const PIX_NUMBER_OF_AUDIO_CHANNELS: usize = PixAudioChannel::NumberOf as usize;

@@ -1,7 +1,8 @@
 pub mod data;
 
 use crate::data::{
-  ADCPM_INDEX_TABLE, ADCPM_STEP_TABLE, ASCII_HEX_DECODER, FONT8X8, PALETTE, PIX_AUDIO_VOICES,
+  PixAudioChannel, ADCPM_INDEX_TABLE, ADCPM_STEP_TABLE, ASCII_HEX_DECODER, FONT8X8, PALETTE,
+  PIX_NUMBER_OF_AUDIO_CHANNELS,
 };
 use rmp_serde::{Deserializer, Serializer};
 use sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
@@ -62,7 +63,7 @@ impl<'a> PixMsgPack<'a> {
 
 pub struct Pix {
   canvas: Canvas<Window>,
-  audio: AudioDevice<PixSound>,
+  audio: AudioDevice<PixSounds>,
   event: EventSubsystem,
   clipboard: ClipboardUtil,
   mouse: MouseUtil,
@@ -154,14 +155,20 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_soundstopped(&mut self, pix: &mut Pix, adcpm_samples: String) ->Result<(), String> {
+  fn on_soundstopped(
+    &mut self,
+    pix: &mut Pix,
+    channel: PixAudioChannel,
+    adcpm_samples: String,
+  ) -> Result<(), String> {
     Ok(())
   }
 }
 
 #[derive(Clone)]
-pub struct PixSoundChannels {
+pub struct PixSound {
   samples: Vec<char>,
+  samples_as_string: String,
   position: f32,
   gain: f32,
   pitch: f32,
@@ -171,17 +178,15 @@ pub struct PixSoundChannels {
   step_index: i32,
   step_size: i32,
   decoded_position: u32,
+  sound_stopped: bool,
 }
 
-impl PixSoundChannels {
+impl PixSound {
   pub fn has_samples(&self) -> bool {
     !self.samples.is_empty()
   }
-  pub fn clear_samples(&mut self) {
-    self.samples.clear();
-  }
   fn current_sample(&self) -> u8 {
-    //TODO
+    //TODO: try to remove unwrap here
     let index = *(self.samples.get(self.decoded_position as usize).unwrap()) as usize;
     ASCII_HEX_DECODER[index]
   }
@@ -219,14 +224,14 @@ impl PixSoundChannels {
   }
 }
 
-impl AudioCallback for PixSound {
+impl AudioCallback for PixSounds {
   type Channel = f32;
 
   fn callback(&mut self, stream: &mut [Self::Channel]) {
     for chunk in stream.chunks_exact_mut(2) {
       let mut left = 0.0;
       let mut right = 0.0;
-      for pix_audio_voice in 0..PIX_AUDIO_VOICES {
+      for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
         let channel = &mut self.channels[pix_audio_voice];
         if channel.has_samples() {
           let position = channel.position as u32;
@@ -238,7 +243,20 @@ impl AudioCallback for PixSound {
             left += sample * (1.0 - channel.pan);
             right += sample * (1.0 + channel.pan);
           } else {
-            channel.clear_samples();
+            *channel = PixSound {
+              samples: Vec::new(),
+              samples_as_string: channel.samples_as_string.clone(),
+              position: 0.0,
+              gain: 1.0,
+              pitch: 1.0,
+              pan: 0.0,
+              predicted_sample: 0,
+              predicted_sample_f: 0.0,
+              step_index: 0,
+              step_size: 7,
+              decoded_position: 0,
+              sound_stopped: true,
+            };
           }
         }
       }
@@ -254,9 +272,9 @@ impl AudioCallback for PixSound {
   }
 }
 
-pub struct PixSound {
+pub struct PixSounds {
   gain: f32,
-  channels: Vec<PixSoundChannels>,
+  channels: Vec<PixSound>,
   advance: f32,
 }
 
@@ -293,8 +311,9 @@ impl Pix {
       samples: Some(1024),
     };
     let audio = audio_ctx.open_playback(None, &audio_spec_desired, |spec| {
-      let channel = PixSoundChannels {
+      let channel = PixSound {
         samples: Vec::new(),
+        samples_as_string: String::new(),
         position: 0.0,
         gain: 1.0,
         pitch: 1.0,
@@ -304,11 +323,12 @@ impl Pix {
         step_index: 0,
         step_size: 7,
         decoded_position: 0,
+        sound_stopped: false,
       };
 
-      PixSound {
+      PixSounds {
         gain: 1.0,
-        channels: vec![channel; PIX_AUDIO_VOICES],
+        channels: vec![channel; PIX_NUMBER_OF_AUDIO_CHANNELS],
         advance: 11_025.0 / spec.freq as f32,
       }
     })?;
@@ -642,15 +662,47 @@ impl Pix {
     r + f64::from(low)
   }
 
-  pub fn play(&mut self, adcpm_samples: String) {
+  pub fn play(&mut self, adcpm_samples: String) -> Result<PixAudioChannel, String> {
     let mut lock = self.audio.lock();
-    for pix_audio_voice in 0..PIX_AUDIO_VOICES {
+    for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
       let channel = &mut (*lock).channels[pix_audio_voice];
       if !channel.has_samples() {
-        channel.samples = adcpm_samples.chars().collect();
-        return;
+        *channel = PixSound {
+          samples: adcpm_samples.chars().collect(),
+          samples_as_string: adcpm_samples,
+          position: 0.0,
+          gain: 1.0,
+          pitch: 1.0,
+          pan: 0.0,
+          predicted_sample: 0,
+          predicted_sample_f: 0.0,
+          step_index: 0,
+          step_size: 7,
+          decoded_position: 0,
+          sound_stopped: false,
+        };
+        return Ok(PixAudioChannel::from(pix_audio_voice));
       }
     }
+    Err(String::from("All 16 channels are in use!"))
+  }
+
+  pub fn stop(&mut self, channel: PixAudioChannel) {
+    let mut lock = self.audio.lock();
+    (*lock).channels[channel as usize] = PixSound {
+      samples: Vec::new(),
+      samples_as_string: String::new(),
+      position: 0.0,
+      gain: 1.0,
+      pitch: 1.0,
+      pan: 0.0,
+      predicted_sample: 0,
+      predicted_sample_f: 0.0,
+      step_index: 0,
+      step_size: 7,
+      decoded_position: 0,
+      sound_stopped: true,
+    };
   }
 }
 
@@ -720,6 +772,26 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         _ => (),
       }
     }
+
+    // TODO: i don't find a better way how to get the stopped sounds.
+    let mut stopped_sound: Vec<(String, usize)> = Vec::new();
+    {
+      let mut lock = pix.audio.lock();
+      for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
+        let channel = &mut (*lock).channels[pix_audio_voice];
+        if channel.sound_stopped {
+          channel.sound_stopped = false;
+          stopped_sound.push((channel.samples_as_string.clone(), pix_audio_voice));
+        }
+      }
+    }
+
+    for sound in &stopped_sound {
+      lifecycle.on_soundstopped(&mut pix, PixAudioChannel::from(sound.1), sound.0.clone())?;
+    }
+
+    stopped_sound.clear();
+
     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     // The rest of the game loop goes here...
     let current_tick = sdl_timer.ticks();
