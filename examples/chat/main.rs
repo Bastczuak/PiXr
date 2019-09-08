@@ -37,7 +37,7 @@ impl PixLifecycle for Game {
         self.text.clear();
         Ok(())
       }
-      _ => Ok(())
+      _ => Ok(()),
     }
   }
   fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
@@ -52,7 +52,7 @@ impl PixLifecycle for Game {
     port: u16,
     data: PixMsgPack,
   ) -> Result<(), String> {
-    let string : String = data.deserialize()?;
+    let string: String = data.deserialize()?;
     self.chat.push(string);
     Ok(())
   }

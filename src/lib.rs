@@ -1,7 +1,10 @@
 pub mod data;
 
-use crate::data::{ASCII_HEX_DECODER, FONT8X8, PALETTE};
+use crate::data::{
+  ADCPM_INDEX_TABLE, ADCPM_STEP_TABLE, ASCII_HEX_DECODER, FONT8X8, PALETTE, PIX_AUDIO_VOICES,
+};
 use rmp_serde::{Deserializer, Serializer};
+use sdl2::audio::{AudioCallback, AudioDevice, AudioSpecDesired};
 use sdl2::clipboard::ClipboardUtil;
 use sdl2::event::{Event, WindowEvent};
 use sdl2::filesystem::{base_path, pref_path};
@@ -59,6 +62,7 @@ impl<'a> PixMsgPack<'a> {
 
 pub struct Pix {
   canvas: Canvas<Window>,
+  audio: AudioDevice<PixSound>,
   event: EventSubsystem,
   clipboard: ClipboardUtil,
   mouse: MouseUtil,
@@ -149,6 +153,111 @@ pub trait PixLifecycle: 'static {
   ) -> Result<(), String> {
     Ok(())
   }
+  #[allow(unused)]
+  fn on_soundstopped(&mut self, pix: &mut Pix, adcpm_samples: String) ->Result<(), String> {
+    Ok(())
+  }
+}
+
+#[derive(Clone)]
+pub struct PixSoundChannels {
+  samples: Vec<char>,
+  position: f32,
+  gain: f32,
+  pitch: f32,
+  pan: f32,
+  predicted_sample: i16,
+  predicted_sample_f: f32,
+  step_index: i32,
+  step_size: i32,
+  decoded_position: u32,
+}
+
+impl PixSoundChannels {
+  pub fn has_samples(&self) -> bool {
+    !self.samples.is_empty()
+  }
+  pub fn clear_samples(&mut self) {
+    self.samples.clear();
+  }
+  fn current_sample(&self) -> u8 {
+    //TODO
+    let index = *(self.samples.get(self.decoded_position as usize).unwrap()) as usize;
+    ASCII_HEX_DECODER[index]
+  }
+  fn decode_adcpm(&mut self, position: u32) {
+    while self.decoded_position <= position {
+      let sample = self.current_sample();
+      let mut difference = self.step_size >> 3;
+      if (sample & 0x04) > 0 {
+        difference += self.step_size;
+      }
+      if (sample & 0x02) > 0 {
+        difference += self.step_size >> 1;
+      }
+      if (sample & 0x01) > 0 {
+        difference += self.step_size >> 2;
+      }
+      if (sample & 0x08) > 0 {
+        difference = -difference;
+      }
+
+      let mut predicted_sample = i32::from(self.predicted_sample) + difference;
+      predicted_sample = predicted_sample.max(-32_768).min(32_767);
+      self.predicted_sample = predicted_sample as i16;
+      let divisor: f32 = if predicted_sample >= 0 {
+        32_767.0
+      } else {
+        32_768.0
+      };
+      self.predicted_sample_f = predicted_sample as f32 / divisor;
+      self.step_index += ADCPM_INDEX_TABLE[sample as usize];
+      self.step_index = self.step_index.max(0).min(88);
+      self.step_size = i32::from(ADCPM_STEP_TABLE[self.step_index as usize]);
+      self.decoded_position += 1;
+    }
+  }
+}
+
+impl AudioCallback for PixSound {
+  type Channel = f32;
+
+  fn callback(&mut self, stream: &mut [Self::Channel]) {
+    for chunk in stream.chunks_exact_mut(2) {
+      let mut left = 0.0;
+      let mut right = 0.0;
+      for pix_audio_voice in 0..PIX_AUDIO_VOICES {
+        let channel = &mut self.channels[pix_audio_voice];
+        if channel.has_samples() {
+          let position = channel.position as u32;
+          if position < channel.samples.len() as u32 {
+            channel.decode_adcpm(position);
+            channel.position += channel.pitch * self.advance;
+            let mut sample = channel.predicted_sample_f * channel.gain;
+            sample = sample.max(-1.0).min(1.0);
+            left += sample * (1.0 - channel.pan);
+            right += sample * (1.0 + channel.pan);
+          } else {
+            channel.clear_samples();
+          }
+        }
+      }
+
+      left *= self.gain;
+      left = left.max(-1.0).min(1.0);
+      chunk[0] = left;
+
+      right *= self.gain;
+      right = right.max(-1.0).min(1.0);
+      chunk[1] = right;
+    }
+  }
+}
+
+pub struct PixSound {
+  gain: f32,
+  channels: Vec<PixSoundChannels>,
+  advance: f32,
 }
 
 impl Pix {
@@ -176,8 +285,37 @@ impl Pix {
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
     let mouse = sdl_ctx.mouse();
+
+    let audio_ctx = sdl_ctx.audio()?;
+    let audio_spec_desired = AudioSpecDesired {
+      freq: Some(11_025),
+      channels: Some(2),
+      samples: Some(1024),
+    };
+    let audio = audio_ctx.open_playback(None, &audio_spec_desired, |spec| {
+      let channel = PixSoundChannels {
+        samples: Vec::new(),
+        position: 0.0,
+        gain: 1.0,
+        pitch: 1.0,
+        pan: 0.0,
+        predicted_sample: 0,
+        predicted_sample_f: 0.0,
+        step_index: 0,
+        step_size: 7,
+        decoded_position: 0,
+      };
+
+      PixSound {
+        gain: 1.0,
+        channels: vec![channel; PIX_AUDIO_VOICES],
+        advance: 11_025.0 / spec.freq as f32,
+      }
+    })?;
+
     Ok(Pix {
       canvas,
+      audio,
       event,
       clipboard,
       mouse,
@@ -503,6 +641,17 @@ impl Pix {
     r *= f64::from(up - low);
     r + f64::from(low)
   }
+
+  pub fn play(&mut self, adcpm_samples: String) {
+    let mut lock = self.audio.lock();
+    for pix_audio_voice in 0..PIX_AUDIO_VOICES {
+      let channel = &mut (*lock).channels[pix_audio_voice];
+      if !channel.has_samples() {
+        channel.samples = adcpm_samples.chars().collect();
+        return;
+      }
+    }
+  }
 }
 
 pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
@@ -511,6 +660,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
   let mut pix = Pix::new(&sdl_ctx, 256, 240, "Default")?;
   let mut event_pump = sdl_ctx.event_pump()?;
   let mut last_tick = 0;
+  pix.audio.resume();
   lifecycle.on_init(&mut pix)?;
   'running: loop {
     for event in event_pump.poll_iter() {
@@ -546,9 +696,9 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         Event::ControllerButtonUp { which, button, .. } => {
           lifecycle.on_controllerup(&mut pix, which, button.string())?
         }
-        Event::ControllerAxisMotion { which, axis, value, .. } => {
-          lifecycle.on_controllermotion(&mut pix, which, axis.string(), value)?
-        }
+        Event::ControllerAxisMotion {
+          which, axis, value, ..
+        } => lifecycle.on_controllermotion(&mut pix, which, axis.string(), value)?,
         Event::Window { win_event, .. } => match win_event {
           WindowEvent::FocusGained => lifecycle.on_focusgained(&mut pix)?,
           WindowEvent::FocusLost => lifecycle.on_focuslost(&mut pix)?,
