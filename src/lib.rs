@@ -231,8 +231,8 @@ impl AudioCallback for PixSounds {
     for chunk in stream.chunks_exact_mut(2) {
       let mut left = 0.0;
       let mut right = 0.0;
-      for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
-        let channel = &mut self.channels[pix_audio_voice];
+      for ch in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
+        let channel = &mut self.channels[ch];
         if channel.has_samples() {
           let position = channel.position as u32;
           if position < channel.samples.len() as u32 {
@@ -664,8 +664,8 @@ impl Pix {
 
   pub fn play(&mut self, adcpm_samples: String) -> Result<PixAudioChannel, String> {
     let mut lock = self.audio.lock();
-    for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
-      let channel = &mut (*lock).channels[pix_audio_voice];
+    for ch in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
+      let channel = &mut (*lock).channels[ch];
       if !channel.has_samples() {
         *channel = PixSound {
           samples: adcpm_samples.chars().collect(),
@@ -681,7 +681,7 @@ impl Pix {
           decoded_position: 0,
           sound_stopped: false,
         };
-        return Ok(PixAudioChannel::from(pix_audio_voice));
+        return Ok(PixAudioChannel::from(ch));
       }
     }
     Err(String::from("All 16 channels are in use!"))
@@ -777,11 +777,11 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     let mut stopped_sound: Vec<(String, usize)> = Vec::new();
     {
       let mut lock = pix.audio.lock();
-      for pix_audio_voice in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
-        let channel = &mut (*lock).channels[pix_audio_voice];
+      for ch in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
+        let channel = &mut (*lock).channels[ch];
         if channel.sound_stopped {
           channel.sound_stopped = false;
-          stopped_sound.push((channel.samples_as_string.clone(), pix_audio_voice));
+          stopped_sound.push((channel.samples_as_string.clone(), ch));
         }
       }
     }
