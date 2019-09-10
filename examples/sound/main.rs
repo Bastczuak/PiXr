@@ -10,7 +10,7 @@ struct Game {
 
 impl PixLifecycle for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
-    let example: String = std::fs::read_to_string("harpsi-cs")
+    let example: String = std::fs::read_to_string("examples/sound/harpsi-cs")
       .unwrap()
       .parse()
       .unwrap();
