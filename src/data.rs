@@ -1,4 +1,4 @@
-pub static FONT8X8: &[[u8; 8]; 256] = &[
+pub const FONT8X8: &[[u8; 8]; 256] = &[
   [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], /* 0 */
   [0x7e, 0x81, 0xa5, 0x81, 0xbd, 0x99, 0x81, 0x7e], /* 1 */
   [0x7e, 0xff, 0xdb, 0xff, 0xc3, 0xe7, 0xff, 0x7e], /* 2 */
@@ -257,7 +257,7 @@ pub static FONT8X8: &[[u8; 8]; 256] = &[
   [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], /* 255 */
 ];
 
-pub static PALETTE: &[(u8, u8, u8, u8); 16] = &[
+pub const PALETTE: &[(u8, u8, u8, u8); 16] = &[
   (0x14, 0x0c, 0x1c, 0xff),
   (0x44, 0x24, 0x34, 0xff),
   (0x30, 0x34, 0x6d, 0xff),
@@ -277,7 +277,7 @@ pub static PALETTE: &[(u8, u8, u8, u8); 16] = &[
 ];
 
 #[rustfmt::skip]
-pub static ASCII_HEX_DECODER: &[u8; 256] = &[
+pub const ASCII_HEX_DECODER: &[u8; 256] = &[
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -297,12 +297,12 @@ pub static ASCII_HEX_DECODER: &[u8; 256] = &[
 ];
 
 #[rustfmt::skip]
-pub static ADCPM_INDEX_TABLE: &[i32; 16] = &[
+pub const ADCPM_INDEX_TABLE: &[i32; 16] = &[
   -1, -1, -1, -1, 2, 4, 6, 8,
   -1, -1, -1, -1, 2, 4, 6, 8
 ];
 
-pub static ADCPM_STEP_TABLE: &[u16; 89] = &[
+pub const ADCPM_STEP_TABLE: &[u16; 89] = &[
   7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73,
   80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494,
   544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499,
@@ -350,7 +350,7 @@ impl PixAudioChannel {
       13 => PixAudioChannel::Channel13,
       14 => PixAudioChannel::Channel14,
       15 => PixAudioChannel::Channel14,
-      _ => panic!("Unknown value: {}", value),
+      _ => panic!("Unknown value for PixAudioChannel: {}", value),
     }
   }
 }
