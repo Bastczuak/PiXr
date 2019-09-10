@@ -186,9 +186,11 @@ impl PixSound {
     !self.samples.is_empty()
   }
   fn current_sample(&self) -> u8 {
-    //TODO: try to remove unwrap here
-    let index = *(self.samples.get(self.decoded_position as usize).unwrap()) as usize;
-    ASCII_HEX_DECODER[index]
+    if let Some(index) = self.samples.get(self.decoded_position as usize) {
+      ASCII_HEX_DECODER[*index as usize]
+    } else {
+      panic!("Invalid access of non exisisting sound sample. There are no more sound samples to process!")
+    }
   }
   fn decode_adcpm(&mut self, position: u32) {
     while self.decoded_position <= position {
@@ -671,7 +673,7 @@ impl Pix {
           samples: adcpm_samples.chars().collect(),
           samples_as_string: adcpm_samples,
           position: 0.0,
-          gain: 1.0,
+          gain: 0.0,
           pitch: 1.0,
           pan: 0.0,
           predicted_sample: 0,

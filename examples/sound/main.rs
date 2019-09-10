@@ -2,7 +2,6 @@ extern crate pix;
 
 use pix::data::PixAudioChannel;
 use pix::{run, Pix, PixLifecycle};
-use std::time::Duration;
 
 struct Game {
   channel: PixAudioChannel,
