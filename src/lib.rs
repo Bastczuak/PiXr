@@ -653,15 +653,14 @@ impl Pix {
     }
   }
 
-  pub fn random(&mut self, n: Option<u32>, m: Option<u32>) -> f64 {
+  pub fn random(&mut self, from: u32, to: u32) -> f32 {
     self.random_seed ^= self.random_seed << 13;
     self.random_seed ^= self.random_seed >> 17;
     self.random_seed ^= self.random_seed << 5;
     let mut r = f64::from(self.random_seed) / 4_294_967_296.0;
-    let up = m.unwrap_or(1);
-    let low = n.unwrap_or(0);
-    r *= f64::from(up - low);
-    r + f64::from(low)
+    r *= f64::from(to - from);
+    r += f64::from(from);
+    r as f32
   }
 
   pub fn play(&mut self, adcpm_samples: String) -> Result<PixAudioChannel, String> {
@@ -673,7 +672,7 @@ impl Pix {
           samples: adcpm_samples.chars().collect(),
           samples_as_string: adcpm_samples,
           position: 0.0,
-          gain: 0.0,
+          gain: 1.0,
           pitch: 1.0,
           pan: 0.0,
           predicted_sample: 0,
