@@ -87,23 +87,23 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_up(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_mousemotion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+  fn on_mouse_motion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_mousedown(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+  fn on_mouse_down(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+  fn on_mouse_up(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -111,19 +111,19 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_controllerremoved(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
+  fn on_controller_removed(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_controllerdown(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
+  fn on_controller_down(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_controllerup(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
+  fn on_controller_up(&mut self, pix: &mut Pix, id: i32, button: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_controllermotion(
+  fn on_controller_motion(
     &mut self,
     pix: &mut Pix,
     id: i32,
@@ -133,15 +133,15 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+  fn on_text_input(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
+  fn on_focus_gained(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
-  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
+  fn on_focus_lost(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -155,7 +155,7 @@ pub trait PixLifecycle: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_soundstopped(
+  fn on_sound_stopped(
     &mut self,
     pix: &mut Pix,
     channel: PixAudioChannel,
@@ -720,40 +720,40 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
         Event::Quit { .. } => break 'running,
         Event::KeyDown { keycode, .. } => {
           if let Some(keycode) = keycode {
-            lifecycle.on_keydown(&mut pix, keycode.name())?
+            lifecycle.on_key_down(&mut pix, keycode.name())?
           }
         }
         Event::KeyUp { keycode, .. } => {
           if let Some(keycode) = keycode {
-            lifecycle.on_keyup(&mut pix, keycode.name())?
+            lifecycle.on_key_up(&mut pix, keycode.name())?
           }
         }
-        Event::TextInput { text, .. } => lifecycle.on_textinput(&mut pix, text)?,
-        Event::MouseMotion { x, y, .. } => lifecycle.on_mousemotion(&mut pix, x, y)?,
+        Event::TextInput { text, .. } => lifecycle.on_text_input(&mut pix, text)?,
+        Event::MouseMotion { x, y, .. } => lifecycle.on_mouse_motion(&mut pix, x, y)?,
         Event::MouseButtonDown { mouse_btn, .. } => {
-          lifecycle.on_mousedown(&mut pix, mouse_btn.to_string())?
+          lifecycle.on_mouse_down(&mut pix, mouse_btn.to_string())?
         }
         Event::MouseButtonUp { mouse_btn, .. } => {
-          lifecycle.on_mouseup(&mut pix, mouse_btn.to_string())?
+          lifecycle.on_mouse_up(&mut pix, mouse_btn.to_string())?
         }
         Event::ControllerDeviceAdded { which, .. } => {
           lifecycle.on_controlleradded(&mut pix, which as i32)?
         }
         Event::ControllerDeviceRemoved { which, .. } => {
-          lifecycle.on_controllerremoved(&mut pix, which)?
+          lifecycle.on_controller_removed(&mut pix, which)?
         }
         Event::ControllerButtonDown { which, button, .. } => {
-          lifecycle.on_controllerdown(&mut pix, which, button.string())?
+          lifecycle.on_controller_down(&mut pix, which, button.string())?
         }
         Event::ControllerButtonUp { which, button, .. } => {
-          lifecycle.on_controllerup(&mut pix, which, button.string())?
+          lifecycle.on_controller_up(&mut pix, which, button.string())?
         }
         Event::ControllerAxisMotion {
           which, axis, value, ..
-        } => lifecycle.on_controllermotion(&mut pix, which, axis.string(), value)?,
+        } => lifecycle.on_controller_motion(&mut pix, which, axis.string(), value)?,
         Event::Window { win_event, .. } => match win_event {
-          WindowEvent::FocusGained => lifecycle.on_focusgained(&mut pix)?,
-          WindowEvent::FocusLost => lifecycle.on_focuslost(&mut pix)?,
+          WindowEvent::FocusGained => lifecycle.on_focus_gained(&mut pix)?,
+          WindowEvent::FocusLost => lifecycle.on_focus_lost(&mut pix)?,
           _ => (),
         },
         _ => (),
@@ -787,7 +787,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     }
 
     for sound in &stopped_sound {
-      lifecycle.on_soundstopped(&mut pix, PixAudioChannel::from(sound.1), sound.0.clone())?;
+      lifecycle.on_sound_stopped(&mut pix, PixAudioChannel::from(sound.1), sound.0.clone())?;
     }
 
     stopped_sound.clear();

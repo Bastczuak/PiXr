@@ -25,7 +25,7 @@ impl PixLifecycle for Game {
     pix.print(14, 0, (h - 9) as i32, self.text.as_str())?;
     Ok(())
   }
-  fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     match key.as_str() {
       "Escape" => pix.quit(),
       "Backspace" => {
@@ -40,7 +40,7 @@ impl PixLifecycle for Game {
       _ => Ok(()),
     }
   }
-  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+  fn on_text_input(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
     self.text.push_str(text.as_str());
     Ok(())
   }

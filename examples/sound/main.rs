@@ -21,7 +21,7 @@ impl PixLifecycle for Game {
     pix.clear(Some(0));
     Ok(())
   }
-  fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     match key.as_str() {
       "Escape" => pix.quit(),
       "Return" => {
@@ -31,7 +31,7 @@ impl PixLifecycle for Game {
       _ => Ok(()),
     }
   }
-  fn on_soundstopped(
+  fn on_sound_stopped(
     &mut self,
     pix: &mut Pix,
     channel: PixAudioChannel,

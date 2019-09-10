@@ -30,35 +30,35 @@ impl PixLifecycle for Game {
     pix.print(14, x, y, self.chat.as_str())?;
     Ok(())
   }
-  fn on_keydown(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{}", key);
     Ok(())
   }
-  fn on_keyup(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
+  fn on_key_up(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
     println!("{}", key);
     Ok(())
   }
-  fn on_mousemotion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+  fn on_mouse_motion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
     println!("{}, {}", x, y);
     Ok(())
   }
-  fn on_mousedown(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+  fn on_mouse_down(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
     println!("{}", button);
     Ok(())
   }
-  fn on_mouseup(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
+  fn on_mouse_up(&mut self, pix: &mut Pix, button: String) -> Result<(), String> {
     println!("{}", button);
     Ok(())
   }
-  fn on_textinput(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
+  fn on_text_input(&mut self, pix: &mut Pix, text: String) -> Result<(), String> {
     println!("textinput {}", text);
     Ok(())
   }
-  fn on_focusgained(&mut self, pix: &mut Pix) -> Result<(), String> {
+  fn on_focus_gained(&mut self, pix: &mut Pix) -> Result<(), String> {
     println!("focus gained");
     Ok(())
   }
-  fn on_focuslost(&mut self, pix: &mut Pix) -> Result<(), String> {
+  fn on_focus_lost(&mut self, pix: &mut Pix) -> Result<(), String> {
     println!("focus lost");
     Ok(())
   }
