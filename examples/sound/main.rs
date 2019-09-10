@@ -1,13 +1,13 @@
 extern crate pix;
 
 use pix::data::PixAudioChannel;
-use pix::{run, Pix, PixLifecycle};
+use pix::{run, Pix, PixGameLoop};
 
 struct Game {
   channel: PixAudioChannel,
 }
 
-impl PixLifecycle for Game {
+impl PixGameLoop for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     let example: String = std::fs::read_to_string("examples/sound/harpsi-cs")
       .unwrap()

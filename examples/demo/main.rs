@@ -1,6 +1,6 @@
 extern crate pix;
 
-use pix::{run, Pix, PixLifecycle};
+use pix::{run, Pix, PixGameLoop};
 use std::f32::consts::PI;
 
 struct Game {
@@ -8,7 +8,7 @@ struct Game {
   chat: String,
 }
 
-impl PixLifecycle for Game {
+impl PixGameLoop for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     pix.screen(256, 240, "Test")
   }

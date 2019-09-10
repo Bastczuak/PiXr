@@ -73,7 +73,7 @@ pub struct Pix {
   random_seed: u32,
 }
 
-pub trait PixLifecycle: 'static {
+pub trait PixGameLoop: 'static {
   #[allow(unused)]
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     Ok(())
@@ -707,54 +707,54 @@ impl Pix {
   }
 }
 
-pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
+pub fn run<E: PixGameLoop>(mut game_loop: E) -> Result<(), String> {
   let sdl_ctx = sdl2::init()?;
   let mut sdl_timer = sdl_ctx.timer()?;
   let mut pix = Pix::new(&sdl_ctx, 256, 240, "Default")?;
   let mut event_pump = sdl_ctx.event_pump()?;
   let mut last_tick = 0;
   pix.audio.resume();
-  lifecycle.on_init(&mut pix)?;
+  game_loop.on_init(&mut pix)?;
   'running: loop {
     for event in event_pump.poll_iter() {
       match event {
         Event::Quit { .. } => break 'running,
         Event::KeyDown { keycode, .. } => {
           if let Some(keycode) = keycode {
-            lifecycle.on_key_down(&mut pix, keycode.name())?
+            game_loop.on_key_down(&mut pix, keycode.name())?
           }
         }
         Event::KeyUp { keycode, .. } => {
           if let Some(keycode) = keycode {
-            lifecycle.on_key_up(&mut pix, keycode.name())?
+            game_loop.on_key_up(&mut pix, keycode.name())?
           }
         }
-        Event::TextInput { text, .. } => lifecycle.on_text_input(&mut pix, text)?,
-        Event::MouseMotion { x, y, .. } => lifecycle.on_mouse_motion(&mut pix, x, y)?,
+        Event::TextInput { text, .. } => game_loop.on_text_input(&mut pix, text)?,
+        Event::MouseMotion { x, y, .. } => game_loop.on_mouse_motion(&mut pix, x, y)?,
         Event::MouseButtonDown { mouse_btn, .. } => {
-          lifecycle.on_mouse_down(&mut pix, mouse_btn.to_string())?
+          game_loop.on_mouse_down(&mut pix, mouse_btn.to_string())?
         }
         Event::MouseButtonUp { mouse_btn, .. } => {
-          lifecycle.on_mouse_up(&mut pix, mouse_btn.to_string())?
+          game_loop.on_mouse_up(&mut pix, mouse_btn.to_string())?
         }
         Event::ControllerDeviceAdded { which, .. } => {
-          lifecycle.on_controlleradded(&mut pix, which as i32)?
+          game_loop.on_controlleradded(&mut pix, which as i32)?
         }
         Event::ControllerDeviceRemoved { which, .. } => {
-          lifecycle.on_controller_removed(&mut pix, which)?
+          game_loop.on_controller_removed(&mut pix, which)?
         }
         Event::ControllerButtonDown { which, button, .. } => {
-          lifecycle.on_controller_down(&mut pix, which, button.string())?
+          game_loop.on_controller_down(&mut pix, which, button.string())?
         }
         Event::ControllerButtonUp { which, button, .. } => {
-          lifecycle.on_controller_up(&mut pix, which, button.string())?
+          game_loop.on_controller_up(&mut pix, which, button.string())?
         }
         Event::ControllerAxisMotion {
           which, axis, value, ..
-        } => lifecycle.on_controller_motion(&mut pix, which, axis.string(), value)?,
+        } => game_loop.on_controller_motion(&mut pix, which, axis.string(), value)?,
         Event::Window { win_event, .. } => match win_event {
-          WindowEvent::FocusGained => lifecycle.on_focus_gained(&mut pix)?,
-          WindowEvent::FocusLost => lifecycle.on_focus_lost(&mut pix)?,
+          WindowEvent::FocusGained => game_loop.on_focus_gained(&mut pix)?,
+          WindowEvent::FocusLost => game_loop.on_focus_lost(&mut pix)?,
           _ => (),
         },
         _ => (),
@@ -765,7 +765,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
       match udp.recv_from(&mut buf) {
         Ok((number_of_byte, src_addr)) => {
           let de = PixMsgPack::new(&buf[..number_of_byte]);
-          lifecycle.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), de)?;
+          game_loop.on_receive(&mut pix, src_addr.ip().to_string(), src_addr.port(), de)?;
         }
         Err(ref err) if err.kind() != ErrorKind::WouldBlock => {
           println!("Something went wrong: {}", err)
@@ -788,7 +788,7 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     }
 
     for sound in &stopped_sound {
-      lifecycle.on_sound_stopped(&mut pix, PixAudioChannel::from(sound.1), sound.0.clone())?;
+      game_loop.on_sound_stopped(&mut pix, PixAudioChannel::from(sound.1), sound.0.clone())?;
     }
 
     stopped_sound.clear();
@@ -798,8 +798,8 @@ pub fn run<E: PixLifecycle>(mut lifecycle: E) -> Result<(), String> {
     let current_tick = sdl_timer.ticks();
     let delta_tick = current_tick - last_tick;
     last_tick = current_tick;
-    lifecycle.on_update(&mut pix, delta_tick as f32 / 1000.0)?;
+    game_loop.on_update(&mut pix, delta_tick as f32 / 1000.0)?;
     pix.canvas.present();
   }
-  lifecycle.on_quit(&mut pix)
+  game_loop.on_quit(&mut pix)
 }

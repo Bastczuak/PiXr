@@ -1,6 +1,6 @@
 extern crate pix;
 
-use pix::{run, Pix, PixLifecycle, PixMsgPack};
+use pix::{run, Pix, PixGameLoop, PixMsgPack};
 
 struct Game {
   t: f32,
@@ -8,7 +8,7 @@ struct Game {
   chat: Vec<String>,
 }
 
-impl PixLifecycle for Game {
+impl PixGameLoop for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
     pix.opensocket(4055, true)?;
     pix.screen(256, 240, "PiX Chat")
