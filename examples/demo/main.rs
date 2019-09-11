@@ -1,6 +1,6 @@
-extern crate pix;
+extern crate PiXr;
 
-use pix::{run, Pix, PixGameLoop};
+use PiXr::{run, Pix, PixGameLoop};
 use std::f32::consts::PI;
 
 struct Game {

@@ -1,7 +1,7 @@
-extern crate pix;
+extern crate PiXr;
 
-use pix::data::PixAudioChannel;
-use pix::{run, Pix, PixGameLoop};
+use PiXr::data::PixAudioChannel;
+use PiXr::{run, Pix, PixGameLoop};
 
 struct Game {
   channel: PixAudioChannel,

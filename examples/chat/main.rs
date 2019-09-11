@@ -1,6 +1,6 @@
-extern crate pix;
+extern crate PiXr;
 
-use pix::{run, Pix, PixGameLoop, PixMsgPack};
+use PiXr::{run, Pix, PixGameLoop, PixMsgPack};
 
 struct Game {
   t: f32,
