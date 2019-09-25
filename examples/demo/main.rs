@@ -1,7 +1,7 @@
 extern crate PiXr;
 
-use PiXr::{run, Pix, PixGameLoop};
 use std::f32::consts::PI;
+use PiXr::{run, Pix, PixGameLoop};
 
 struct Game {
   t: f32,
@@ -18,16 +18,14 @@ impl PixGameLoop for Game {
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     let (w, h) = pix.dimension();
-    let w = w as f32;
-    let h = h as f32;
     self.t += dt * 1.25;
     while self.t >= PI * 2.0 {
       self.t -= PI * 2.0;
     }
-    let x = (w / 2.0 - (11.0 * 8.0 / 2.0)) as i32;
-    let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0) as i32;
+    let x = (w / 2.0 - (11.0 * 8.0 / 2.0));
+    let y = (h / 2.0 + f32::sin(self.t) * h / 4.0 - 4.0);
     pix.clear(Some(0));
-    pix.print(14, x, y, self.chat.as_str())?;
+    pix.print(14.0, x, y, self.chat.as_str())?;
     Ok(())
   }
   fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
@@ -38,7 +36,7 @@ impl PixGameLoop for Game {
     println!("{}", key);
     Ok(())
   }
-  fn on_mouse_motion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+  fn on_mouse_motion(&mut self, pix: &mut Pix, x: f32, y: f32) -> Result<(), String> {
     println!("{}, {}", x, y);
     Ok(())
   }

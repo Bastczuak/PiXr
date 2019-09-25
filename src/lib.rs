@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::ErrorKind;
 use std::net::{IpAddr, ToSocketAddrs, UdpSocket};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 trait SdlMouseButtonToString {
   fn to_string(&self) -> String;
@@ -56,7 +56,7 @@ impl<'a> PixMsgPack<'a> {
   pub fn deserialize<T: Deserialize<'a>>(self) -> Result<T, String> {
     let mut de = Deserializer::new(self.data);
     let result: T =
-      Deserialize::deserialize(&mut de).map_err(|e| format!("deserialize() {}", e.to_string()))?;
+        Deserialize::deserialize(&mut de).map_err(|e| format!("deserialize() {}", e.to_string()))?;
     Ok(result)
   }
 }
@@ -95,7 +95,7 @@ pub trait PixGameLoop: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_mouse_motion(&mut self, pix: &mut Pix, x: i32, y: i32) -> Result<(), String> {
+  fn on_mouse_motion(&mut self, pix: &mut Pix, x: f32, y: f32) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -107,7 +107,7 @@ pub trait PixGameLoop: 'static {
     Ok(())
   }
   #[allow(unused)]
-  fn on_controlleradded(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
+  fn on_controller_added(&mut self, pix: &mut Pix, id: i32) -> Result<(), String> {
     Ok(())
   }
   #[allow(unused)]
@@ -189,7 +189,9 @@ impl PixSound {
     if let Some(index) = self.samples.get(self.decoded_position as usize) {
       ASCII_HEX_DECODER[*index as usize]
     } else {
-      panic!("Invalid access of non exisisting sound sample. There are no more sound samples to process!")
+      panic!(
+        "Invalid access of non existing sound sample. There are no more sound samples to process!"
+      )
     }
   }
   fn decode_adcpm(&mut self, position: u32) {
@@ -291,17 +293,17 @@ impl Pix {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-      .window(title, new_width, new_height)
-      .position_centered()
-      .build()
-      .map_err(|e| format!("new() {}", e.to_string()))?;
+        .window(title, new_width, new_height)
+        .position_centered()
+        .build()
+        .map_err(|e| format!("new() {}", e.to_string()))?;
     let mut canvas = window
-      .into_canvas()
-      .build()
-      .map_err(|e| format!("new() {}", e.to_string()))?;
+        .into_canvas()
+        .build()
+        .map_err(|e| format!("new() {}", e.to_string()))?;
     canvas
-      .set_logical_size(width, height)
-      .map_err(|e| format!("new() {}", e.to_string()))?;
+        .set_logical_size(width, height)
+        .map_err(|e| format!("new() {}", e.to_string()))?;
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
     let mouse = sdl_ctx.mouse();
@@ -352,27 +354,34 @@ impl Pix {
     match color {
       Some(color) => self.canvas.set_draw_color(self.colors[color % 16]),
       None => self
-        .canvas
-        .set_draw_color(self.colors[self.clear_color % 16]),
+          .canvas
+          .set_draw_color(self.colors[self.clear_color % 16]),
     };
     self.canvas.clear();
   }
 
-  pub fn pixel(&mut self, color: usize, x: i32, y: i32) -> Result<(), String> {
+  pub fn pixel(&mut self, color: f32, x: f32, y: f32) -> Result<(), String> {
+    let color = color as usize;
+    let x = x as i32;
+    let y = y as i32;
+
     self.canvas.set_draw_color(self.colors[color % 16]);
     self.canvas.draw_point(Point::new(x, y))
   }
 
-  pub fn line(&mut self, color: usize, x0: i32, y0: i32, x1: i32, y1: i32) -> Result<(), String> {
-    let mut x0 = x0;
-    let mut y0 = y0;
+  pub fn line(&mut self, color: f32, x0: f32, y0: f32, x1: f32, y1: f32) -> Result<(), String> {
+    let mut x0 = x0 as i32;
+    let mut y0 = y0 as i32;
+    let x1 = x1 as i32;
+    let y1 = y1 as i32;
+
     let dx = i32::abs(x1 - x0);
     let dy = i32::abs(y1 - y0);
     let sx = if x0 < x1 { 1 } else { -1 };
     let sy = if y0 < y1 { 1 } else { -1 };
     let mut err = if dx > dy { dx / 2 } else { -dy / 2 };
     'running: loop {
-      self.pixel(color, x0, y0)?;
+      self.pixel(color, x0 as f32, y0 as f32)?;
       if x0 == x1 && y0 == y1 {
         break 'running;
       }
@@ -390,13 +399,18 @@ impl Pix {
 
   pub fn rect(
     &mut self,
-    color: usize,
-    mut x0: i32,
-    mut y0: i32,
-    mut x1: i32,
-    mut y1: i32,
+    color: f32,
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
     fill: bool,
   ) -> Result<(), String> {
+    let mut x0 = x0 as i32;
+    let mut y0 = y0 as i32;
+    let mut x1 = x1 as i32;
+    let mut y1 = y1 as i32;
+
     if x0 > x1 {
       std::mem::swap(&mut x0, &mut x1);
     }
@@ -406,17 +420,17 @@ impl Pix {
     if fill {
       for y in y0..=y1 {
         for x in x0..=x1 {
-          self.pixel(color, x, y)?;
+          self.pixel(color, x as f32, y as f32)?;
         }
       }
     } else {
       for y in y0..=y1 {
-        self.pixel(color, x0, y)?;
-        self.pixel(color, x1, y)?;
+        self.pixel(color, x0 as f32, y as f32)?;
+        self.pixel(color, x1 as f32, y as f32)?;
       }
       for x in x0..=x1 {
-        self.pixel(color, x, y0)?;
-        self.pixel(color, x, y1)?;
+        self.pixel(color, x as f32, y0 as f32)?;
+        self.pixel(color, x as f32, y1 as f32)?;
       }
     }
     Ok(())
@@ -424,12 +438,15 @@ impl Pix {
 
   pub fn circle(
     &mut self,
-    color: usize,
-    x: i32,
-    y: i32,
-    radius: i32,
+    color: f32,
+    x: f32,
+    y: f32,
+    radius: f32,
     fill: bool,
   ) -> Result<(), String> {
+    let x = x as i32;
+    let y = y as i32;
+    let radius = radius as i32;
     let r0sq = if fill { 0 } else { (radius - 1) * (radius - 1) };
     let r1sq = radius * radius;
     let x0 = x;
@@ -442,26 +459,27 @@ impl Pix {
         let dx = x * x;
         let distance = dx + dy;
         if distance >= r0sq && distance <= r1sq {
-          self.pixel(color, x0 + x, y0 + y)?;
+          self.pixel(color, x0 as f32 + x as f32, y0 as f32 + y as f32)?;
         }
       }
     }
     Ok(())
   }
 
-  pub fn print(&mut self, color: usize, x: i32, y: i32, text: &str) -> Result<(), String> {
+  pub fn print(&mut self, color: f32, x: f32, y: f32, text: &str) -> Result<(), String> {
     let mut x0 = x;
     let y0 = y;
+
     for char in text.chars() {
       for y in 0..8 {
-        let mask = FONT8X8[char as usize][y as usize];
+        let mask = FONT8X8[char as usize][y];
         for x in 0..8 {
           if (mask & (1 << x)) != 0 {
-            self.pixel(color, x0 + x, y0 + y)?;
+            self.pixel(color, x0 + x as f32, y0 + y as f32)?;
           }
         }
       }
-      x0 += 8;
+      x0 += 8.0;
     }
     Ok(())
   }
@@ -469,18 +487,21 @@ impl Pix {
   pub fn draw(
     &mut self,
     pixels: &str,
-    width: u32,
-    height: u32,
-    x: i32,
-    y: i32,
+    width: f32,
+    height: f32,
+    x: f32,
+    y: f32,
     transparent_color: Option<u8>,
   ) -> Result<(), String> {
+    let width = width as u32;
+    let height = height as u32;
+
     for x0 in 0..height {
       for y0 in 0..width {
         let index = (y0 + x0 * width) as usize;
         let color = ASCII_HEX_DECODER[pixels.as_bytes()[index] as usize];
         if color != transparent_color.unwrap_or(0) {
-          self.pixel(color as usize, y0 as i32 + y, x0 as i32 + x)?;
+          self.pixel(f32::from(color), y0 as f32 + y, x0 as f32 + x)?;
         }
       }
     }
@@ -489,14 +510,14 @@ impl Pix {
 
   pub fn screen(&mut self, width: u32, height: u32, title: &str) -> Result<(), String> {
     self
-      .canvas
-      .window_mut()
-      .set_title(title)
-      .map_err(|e| format!("screen() {}", e.to_string()))?;
+        .canvas
+        .window_mut()
+        .set_title(title)
+        .map_err(|e| format!("screen() {}", e.to_string()))?;
     self
-      .canvas
-      .set_logical_size(width, height)
-      .map_err(|e| format!("screen() {}", e.to_string()))
+        .canvas
+        .set_logical_size(width, height)
+        .map_err(|e| format!("screen() {}", e.to_string()))
   }
 
   pub fn fullscreen(&mut self, enable: Option<bool>) -> Result<bool, String> {
@@ -522,45 +543,44 @@ impl Pix {
     }
   }
 
-  pub fn dimension(&self) -> (u32, u32) {
-    self.canvas.logical_size()
+  pub fn dimension(&self) -> (f32, f32) {
+    let (w, h) = self.canvas.logical_size();
+    (w as f32, h as f32)
   }
 
-  pub fn color(&mut self, index: usize, rgb: Option<(u8, u8, u8, u8)>) -> Option<(u8, u8, u8, u8)> {
-    match rgb {
-      Some(rgb) => {
-        self.colors[index % 16] = rgb;
-        None
-      }
-      None => Some(self.colors[index % 16]),
-    }
+  pub fn set_color(&mut self, index: f32, rgba: (u8, u8, u8, u8)) {
+    self.colors[index as usize % 16] = rgba
   }
 
-  pub fn clear_color(&mut self, color: Option<usize>) -> Option<usize> {
-    match color {
-      Some(color) => {
-        self.clear_color = color;
-        None
-      }
-      None => Some(self.clear_color),
-    }
+  pub fn get_color(self, index: f32) -> (u8, u8, u8, u8) {
+    self.colors[index as usize % 16]
   }
 
-  pub fn clip_rect(&mut self, rect: Option<(i32, i32, i32, i32)>) -> Option<(i32, i32, i32, i32)> {
+  pub fn set_clear_color(&mut self, color: f32) {
+    self.clear_color = color as usize
+  }
+
+  pub fn get_clear_color(self) -> f32 {
+    self.clear_color as f32
+  }
+
+  pub fn clip_rect(&mut self, rect: Option<(f32, f32, f32, f32)>) -> Option<(f32, f32, f32, f32)> {
     match rect {
       Some(rect) => {
         let (x0, y0, x1, y1) = rect;
-        let width = i32::abs(x1 - x0) as u32;
-        let height = i32::abs(y1 - y0) as u32;
-        self.canvas.set_clip_rect(Rect::new(x0, y0, width, height));
+        let width = f32::abs(x1 - x0);
+        let height = f32::abs(y1 - y0);
+        self
+            .canvas
+            .set_clip_rect(Rect::new(x0 as i32, y0 as i32, width as u32, height as u32));
         None
       }
       None => {
         let rect = self.canvas.clip_rect()?;
-        let x0 = rect.x();
-        let y0 = rect.y();
-        let x1 = x0 + rect.width() as i32;
-        let y1 = y0 + rect.height() as i32;
+        let x0 = rect.x() as f32;
+        let y0 = rect.y() as f32;
+        let x1 = x0 + rect.width() as f32;
+        let y1 = y0 + rect.height() as f32;
         Some((x0, y0, x1, y1))
       }
     }
@@ -604,27 +624,27 @@ impl Pix {
     }
   }
 
-  pub fn opensocket(&mut self, port: u16, broadcast: bool) -> Result<(), String> {
+  pub fn open_socket(&mut self, port: u16, broadcast: bool) -> Result<(), String> {
     let socket = UdpSocket::bind(format!("0.0.0.0:{}", port))
-      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     socket
-      .set_nonblocking(true)
-      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+        .set_nonblocking(true)
+        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     socket
-      .set_broadcast(broadcast)
-      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+        .set_broadcast(broadcast)
+        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     self.udp = Some(socket);
     Ok(())
   }
 
-  pub fn closesocket(&mut self) {
+  pub fn close_socket(&mut self) {
     self.udp = None;
   }
 
   pub fn resolve_host(&mut self, host: &str) -> Result<Vec<String>, String> {
     let results: io::Result<Vec<IpAddr>> = (host, 0)
-      .to_socket_addrs()
-      .map(|iter| iter.map(|address| address.ip()).collect());
+        .to_socket_addrs()
+        .map(|iter| iter.map(|address| address.ip()).collect());
     let ips = results.map_err(|e| format!("resolve_host() {}", e.to_string()))?;
     let ret: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
     Ok(ret)
@@ -635,25 +655,24 @@ impl Pix {
     match self.udp {
       Some(ref udp) => {
         udp
-          .send_to(&se[..], format!("{}:{}", ip, port))
-          .map_err(|e| format!("send() {}", e.to_string()))?;
+            .send_to(&se[..], format!("{}:{}", ip, port))
+            .map_err(|e| format!("send() {}", e.to_string()))?;
         Ok(())
       }
       None => Ok(()),
     }
   }
 
-  pub fn randomseed(&mut self, seed: Option<u32>) -> Option<u32> {
-    match seed {
-      Some(seed) => {
-        self.random_seed = seed;
-        None
-      }
-      None => Some(self.random_seed),
-    }
+  pub fn random_seed(&mut self) -> Result<f32, String> {
+    let seed = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .subsec_micros();
+    self.random_seed = seed;
+    Ok(seed as f32)
   }
 
-  pub fn random(&mut self, from: u32, to: u32) -> f32 {
+  pub fn random(&mut self, from: f32, to: f32) -> f32 {
     self.random_seed ^= self.random_seed << 13;
     self.random_seed ^= self.random_seed >> 17;
     self.random_seed ^= self.random_seed << 5;
@@ -730,7 +749,9 @@ pub fn run<E: PixGameLoop>(mut game_loop: E) -> Result<(), String> {
           }
         }
         Event::TextInput { text, .. } => game_loop.on_text_input(&mut pix, text)?,
-        Event::MouseMotion { x, y, .. } => game_loop.on_mouse_motion(&mut pix, x, y)?,
+        Event::MouseMotion { x, y, .. } => {
+          game_loop.on_mouse_motion(&mut pix, x as f32, y as f32)?
+        }
         Event::MouseButtonDown { mouse_btn, .. } => {
           game_loop.on_mouse_down(&mut pix, mouse_btn.to_string())?
         }
@@ -738,7 +759,7 @@ pub fn run<E: PixGameLoop>(mut game_loop: E) -> Result<(), String> {
           game_loop.on_mouse_up(&mut pix, mouse_btn.to_string())?
         }
         Event::ControllerDeviceAdded { which, .. } => {
-          game_loop.on_controlleradded(&mut pix, which as i32)?
+          game_loop.on_controller_added(&mut pix, which as i32)?
         }
         Event::ControllerDeviceRemoved { which, .. } => {
           game_loop.on_controller_removed(&mut pix, which)?

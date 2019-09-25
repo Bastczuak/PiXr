@@ -10,19 +10,19 @@ struct Game {
 
 impl PixGameLoop for Game {
   fn on_init(&mut self, pix: &mut Pix) -> Result<(), String> {
-    pix.opensocket(4055, true)?;
+    pix.open_socket(4055, true)?;
     pix.screen(256, 240, "PiX Chat")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
     pix.clear(Some(0));
 
     for (y, message) in self.chat.iter().enumerate() {
-      pix.print(11, 0, (y * 8) as i32, message.as_str())?;
+      pix.print(11.0, 0.0, y as f32 * 8.0, message.as_str())?;
     }
 
     let (w, h) = pix.dimension();
-    pix.line(1, 0, (h - 10) as i32, (w - 1) as i32, (h - 10) as i32)?;
-    pix.print(14, 0, (h - 9) as i32, self.text.as_str())?;
+    pix.line(1.0, 0.0, h - 10.0, w - 1.0, h - 10.0)?;
+    pix.print(14.0, 0.0, h - 9.0, self.text.as_str())?;
     Ok(())
   }
   fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
