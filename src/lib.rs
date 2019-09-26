@@ -376,20 +376,21 @@ impl Pix {
     let y1 = y1 as i32;
 
     let dx = i32::abs(x1 - x0);
-    let dy = i32::abs(y1 - y0);
     let sx = if x0 < x1 { 1 } else { -1 };
+    let dy = -i32::abs(y1 - y0);
     let sy = if y0 < y1 { 1 } else { -1 };
-    let mut err = if dx > dy { dx / 2 } else { -dy / 2 };
+    let mut err = dx + dy;
     'running: loop {
       self.pixel(color, x0 as f32, y0 as f32)?;
       if x0 == x1 && y0 == y1 {
         break 'running;
       }
-      if err > -dx {
-        err -= dy;
+      let e2 = 2 * err;
+      if e2 > dy {
+        err += dy;
         x0 += sx;
       }
-      if err < dy {
+      if e2 <= dx {
         err += dx;
         y0 += sy;
       }
