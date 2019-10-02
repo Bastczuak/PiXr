@@ -1,5 +1,3 @@
-extern crate PiXr;
-
 use PiXr::data::PixAudioChannel;
 use PiXr::{run, Pix, PixGameLoop};
 

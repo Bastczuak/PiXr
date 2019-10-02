@@ -56,7 +56,7 @@ impl<'a> PixMsgPack<'a> {
   pub fn deserialize<T: Deserialize<'a>>(self) -> Result<T, String> {
     let mut de = Deserializer::new(self.data);
     let result: T =
-        Deserialize::deserialize(&mut de).map_err(|e| format!("deserialize() {}", e.to_string()))?;
+      Deserialize::deserialize(&mut de).map_err(|e| format!("deserialize() {}", e.to_string()))?;
     Ok(result)
   }
 }
@@ -293,17 +293,17 @@ impl Pix {
     let new_width = width * factor as u32;
     let new_height = height * factor as u32;
     let window = video_ctx
-        .window(title, new_width, new_height)
-        .position_centered()
-        .build()
-        .map_err(|e| format!("new() {}", e.to_string()))?;
+      .window(title, new_width, new_height)
+      .position_centered()
+      .build()
+      .map_err(|e| format!("new() {}", e.to_string()))?;
     let mut canvas = window
-        .into_canvas()
-        .build()
-        .map_err(|e| format!("new() {}", e.to_string()))?;
+      .into_canvas()
+      .build()
+      .map_err(|e| format!("new() {}", e.to_string()))?;
     canvas
-        .set_logical_size(width, height)
-        .map_err(|e| format!("new() {}", e.to_string()))?;
+      .set_logical_size(width, height)
+      .map_err(|e| format!("new() {}", e.to_string()))?;
     let event = sdl_ctx.event()?;
     let clipboard = video_ctx.clipboard();
     let mouse = sdl_ctx.mouse();
@@ -354,8 +354,8 @@ impl Pix {
     match color {
       Some(color) => self.canvas.set_draw_color(self.colors[color % 16]),
       None => self
-          .canvas
-          .set_draw_color(self.colors[self.clear_color % 16]),
+        .canvas
+        .set_draw_color(self.colors[self.clear_color % 16]),
     };
     self.canvas.clear();
   }
@@ -511,14 +511,14 @@ impl Pix {
 
   pub fn screen(&mut self, width: u32, height: u32, title: &str) -> Result<(), String> {
     self
-        .canvas
-        .window_mut()
-        .set_title(title)
-        .map_err(|e| format!("screen() {}", e.to_string()))?;
+      .canvas
+      .window_mut()
+      .set_title(title)
+      .map_err(|e| format!("screen() {}", e.to_string()))?;
     self
-        .canvas
-        .set_logical_size(width, height)
-        .map_err(|e| format!("screen() {}", e.to_string()))
+      .canvas
+      .set_logical_size(width, height)
+      .map_err(|e| format!("screen() {}", e.to_string()))
   }
 
   pub fn fullscreen(&mut self, enable: Option<bool>) -> Result<bool, String> {
@@ -572,8 +572,8 @@ impl Pix {
         let width = f32::abs(x1 - x0);
         let height = f32::abs(y1 - y0);
         self
-            .canvas
-            .set_clip_rect(Rect::new(x0 as i32, y0 as i32, width as u32, height as u32));
+          .canvas
+          .set_clip_rect(Rect::new(x0 as i32, y0 as i32, width as u32, height as u32));
         None
       }
       None => {
@@ -627,13 +627,13 @@ impl Pix {
 
   pub fn open_socket(&mut self, port: u16, broadcast: bool) -> Result<(), String> {
     let socket = UdpSocket::bind(format!("0.0.0.0:{}", port))
-        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     socket
-        .set_nonblocking(true)
-        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+      .set_nonblocking(true)
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     socket
-        .set_broadcast(broadcast)
-        .map_err(|e| format!("opensocket() {}", e.to_string()))?;
+      .set_broadcast(broadcast)
+      .map_err(|e| format!("opensocket() {}", e.to_string()))?;
     self.udp = Some(socket);
     Ok(())
   }
@@ -644,8 +644,8 @@ impl Pix {
 
   pub fn resolve_host(&mut self, host: &str) -> Result<Vec<String>, String> {
     let results: io::Result<Vec<IpAddr>> = (host, 0)
-        .to_socket_addrs()
-        .map(|iter| iter.map(|address| address.ip()).collect());
+      .to_socket_addrs()
+      .map(|iter| iter.map(|address| address.ip()).collect());
     let ips = results.map_err(|e| format!("resolve_host() {}", e.to_string()))?;
     let ret: Vec<String> = ips.iter().map(|ip| ip.to_string()).collect();
     Ok(ret)
@@ -656,8 +656,8 @@ impl Pix {
     match self.udp {
       Some(ref udp) => {
         udp
-            .send_to(&se[..], format!("{}:{}", ip, port))
-            .map_err(|e| format!("send() {}", e.to_string()))?;
+          .send_to(&se[..], format!("{}:{}", ip, port))
+          .map_err(|e| format!("send() {}", e.to_string()))?;
         Ok(())
       }
       None => Ok(()),
@@ -666,9 +666,9 @@ impl Pix {
 
   pub fn random_seed(&mut self) -> Result<f32, String> {
     let seed = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .subsec_micros();
+      .duration_since(UNIX_EPOCH)
+      .map_err(|e| e.to_string())?
+      .subsec_micros();
     self.random_seed = seed;
     Ok(seed as f32)
   }
