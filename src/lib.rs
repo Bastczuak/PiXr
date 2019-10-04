@@ -574,16 +574,19 @@ impl Pix {
         self
           .canvas
           .set_clip_rect(Rect::new(x0 as i32, y0 as i32, width as u32, height as u32));
-        None
       }
-      None => {
-        let rect = self.canvas.clip_rect()?;
+      None => self.canvas.set_clip_rect(None),
+    };
+
+    match self.canvas.clip_rect() {
+      Some(rect) => {
         let x0 = rect.x() as f32;
         let y0 = rect.y() as f32;
         let x1 = x0 + rect.width() as f32;
         let y1 = y0 + rect.height() as f32;
         Some((x0, y0, x1, y1))
       }
+      _ => None,
     }
   }
 
