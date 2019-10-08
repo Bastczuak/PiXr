@@ -15,6 +15,13 @@
 
 Not ready yet.
 
+## TODO
+
+- [] Documentation
+- [] Tests
+- [] Lua Script integration
+
+
 ## License
 
 [MIT](LICENSE)
