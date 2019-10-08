@@ -8,7 +8,7 @@
 - **sprites** are strings with hex values
 - **sounds** are strings with hex values (ADPCM)
 - **network** support (UDP)
-- **simple** but **powerful** API (32 functions)
+- **simple** but **powerful** API
 - **portable** due to the use of **SDL2** (official support for Windows, macOS, Linux, Android, iOS)
 
 ## Documentation
