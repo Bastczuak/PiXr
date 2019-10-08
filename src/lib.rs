@@ -799,7 +799,21 @@ pub fn run<E: PixGameLoop>(mut game_loop: E) -> Result<(), String> {
       }
     }
 
+    /*
     // TODO: i don't find a better way how to get the stopped sounds.
+    // I really would implement it like this, but then I get multiple
+    // borrow pix as mutable more than once at a time
+    for ch in 0..PIX_NUMBER_OF_AUDIO_CHANNELS {
+      let channel = &mut (*pix.audio.lock()).channels[ch];
+      if channel.sound_stopped {
+        channel.sound_stopped = false;
+        game_loop.on_sound_stopped(
+          &mut pix,
+          PixAudioChannel::from(ch),
+          channel.samples_as_string.clone(),
+        )?;
+      }
+    }*/
     let mut stopped_sound: Vec<(String, usize)> = Vec::new();
     {
       let mut lock = pix.audio.lock();
