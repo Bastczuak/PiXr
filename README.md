@@ -19,8 +19,6 @@ Not ready yet.
 
 - [] Documentation
 - [] Tests
-- [] Lua Script integration
-
 
 ## License
 
