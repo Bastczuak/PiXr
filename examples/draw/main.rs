@@ -7,7 +7,7 @@ impl PixGameLoop for Game {
     pix.screen(256, 240, "Line")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
-    pix.clear(Some(0));
+    pix.clear(0);
     let (w, h) = pix.dimension();
     // drawing circles
     pix.circle(10.0, w / 2.0, h / 2.0, 40.0, true)?;

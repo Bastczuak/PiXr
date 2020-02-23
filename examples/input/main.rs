@@ -14,7 +14,7 @@ impl PixGameLoop for Game {
     pix.screen(256, 240, "Callbacks")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
-    pix.clear(Some(0));
+    pix.clear(0);
     pix.print(14.0, 0.0, 0.0, format!("Mouse: {}", self.mouse).as_str())?;
     pix.print(14.0, 0.0, 14.0, format!("Key: {}", self.key).as_str())?;
     pix.print(14.0, 0.0, 28.0, format!("Text: {}", self.text).as_str())?;

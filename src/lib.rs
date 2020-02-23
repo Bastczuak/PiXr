@@ -350,8 +350,8 @@ impl Pix {
     })
   }
 
-  pub fn clear(&mut self, color: Option<usize>) {
-    match color {
+  pub fn clear(&mut self, color: impl Into<Option<usize>>) {
+    match color.into() {
       Some(color) => self.canvas.set_draw_color(self.colors[color % 16]),
       None => self
         .canvas
@@ -492,10 +492,11 @@ impl Pix {
     height: f32,
     x: f32,
     y: f32,
-    transparent_color: Option<u8>,
+    transparent_color: impl Into<Option<u8>>,
   ) -> Result<(), String> {
     let width = width as u32;
     let height = height as u32;
+    let transparent_color = transparent_color.into();
 
     for x0 in 0..height {
       for y0 in 0..width {
@@ -521,13 +522,13 @@ impl Pix {
       .map_err(|e| format!("screen() {}", e.to_string()))
   }
 
-  pub fn fullscreen(&mut self, enable: Option<bool>) -> Result<bool, String> {
+  pub fn fullscreen(&mut self, enable: impl Into<Option<bool>>) -> Result<bool, String> {
     let state = self.canvas.window_mut().fullscreen_state();
     let state = match state {
       FullscreenType::Off => false,
       _ => true,
     };
-    match enable {
+    match enable.into() {
       Some(enable) => {
         let enable = if enable {
           FullscreenType::Desktop
@@ -565,8 +566,8 @@ impl Pix {
     self.clear_color as f32
   }
 
-  pub fn clip_rect(&mut self, rect: Option<(f32, f32, f32, f32)>) -> Option<(f32, f32, f32, f32)> {
-    match rect {
+  pub fn clip_rect(&mut self, rect: impl Into<Option<(f32, f32, f32, f32)>>) -> Option<(f32, f32, f32, f32)> {
+    match rect.into() {
       Some(rect) => {
         let (x0, y0, x1, y1) = rect;
         let width = f32::abs(x1 - x0);
@@ -608,8 +609,8 @@ impl Pix {
     }
   }
 
-  pub fn clipboard(&self, text: Option<&str>) -> Result<String, String> {
-    match text {
+  pub fn clipboard<'a>(&self, text: impl Into<Option<&'a str>>) -> Result<String, String> {
+    match text.into() {
       Some(text) => match self.clipboard.set_clipboard_text(text) {
         Ok(_) => Ok(String::new()),
         Err(e) => Err(e),
@@ -618,8 +619,8 @@ impl Pix {
     }
   }
 
-  pub fn mouse_cursor(&self, visible: Option<bool>) -> Option<bool> {
-    match visible {
+  pub fn mouse_cursor(&self, visible: impl Into<Option<bool>>) -> Option<bool> {
+    match visible.into() {
       Some(visible) => {
         self.mouse.show_cursor(visible);
         None

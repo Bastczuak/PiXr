@@ -14,7 +14,7 @@ impl PixGameLoop for Game {
     pix.screen(256, 240, "PiX Chat")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
-    pix.clear(Some(0));
+    pix.clear(0);
 
     for (y, message) in self.chat.iter().enumerate() {
       pix.print(11.0, 0.0, y as f32 * 8.0, message.as_str())?;

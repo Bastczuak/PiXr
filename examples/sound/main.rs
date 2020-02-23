@@ -15,7 +15,7 @@ impl PixGameLoop for Game {
     pix.screen(256, 240, "Audio Example")
   }
   fn on_update(&mut self, pix: &mut Pix, dt: f32) -> Result<(), String> {
-    pix.clear(Some(0));
+    pix.clear(0);
     Ok(())
   }
   fn on_key_down(&mut self, pix: &mut Pix, key: String) -> Result<(), String> {
