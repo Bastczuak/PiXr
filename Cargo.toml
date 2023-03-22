@@ -9,5 +9,5 @@ name = "PiXr"
 
 [dependencies]
 sdl2 = "0.32"
-rmp-serde = "0.13"
+rmp-serde = "1.1"
 serde = { version = "1.0", features = ["derive"] }
